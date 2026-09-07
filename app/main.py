@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.errors import registrar_manejadores
 from app.routers.reservas import router as reservas_router
 
 app = FastAPI(
@@ -7,4 +8,5 @@ app = FastAPI(
     version="0.1.0",
 )
 
+registrar_manejadores(app)
 app.include_router(reservas_router)
