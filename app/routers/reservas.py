@@ -1,9 +1,15 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Response, status
+from fastapi import APIRouter, Path, Query, Response, status
 
 from app.schemas.error import ErrorRespuesta
-from app.schemas.reserva import ReservaActualizar, ReservaCrear, ReservaRespuesta
+from app.schemas.reserva import (
+    ReservaActualizar,
+    ReservaConsulta,
+    ReservaCrear,
+    ReservaPagina,
+    ReservaRespuesta,
+)
 from app.services import reserva_service
 
 router = APIRouter(prefix="/reservas", tags=["Reservas"])
@@ -27,10 +33,21 @@ async def crear_reserva(datos: ReservaCrear, response: Response) -> ReservaRespu
     return reserva
 
 
-@router.get("", response_model=list[ReservaRespuesta], summary="Listar reservas")
-async def listar_reservas() -> list[ReservaRespuesta]:
-    """Devuelve las reservas en memoria. La consulta avanzada se agregará posteriormente."""
-    return reserva_service.listar_reservas()
+@router.get(
+    "",
+    response_model=ReservaPagina,
+    summary="Listar reservas con filtros, ordenamiento y paginación",
+    responses={422: {"model": ErrorRespuesta, "description": "Parámetros de consulta inválidos"}},
+)
+async def listar_reservas(consulta: Annotated[ReservaConsulta, Query()]) -> ReservaPagina:
+    """Filtra por fecha, sala, estudiante y estado; luego ordena y finalmente pagina.
+
+    Los filtros se combinan. Por defecto ordena por ID ascendente y devuelve
+    la página 1 con hasta 10 reservas. El total cuenta los resultados filtrados.
+    Una página fuera de rango devuelve items vacío conservando los metadatos.
+    Ejemplo: /reservas?sala_id=2&estado=activa&ordenar_por=fecha&direccion=asc&pagina=1&limite=10
+    """
+    return reserva_service.listar_reservas(consulta)
 
 
 @router.get(

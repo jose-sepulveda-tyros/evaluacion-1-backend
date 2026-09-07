@@ -33,3 +33,24 @@ class ReservaActualizar(ReservaCrear):
 
 class ReservaRespuesta(ReservaCrear):
     id: int = Field(gt=0, strict=True)
+
+
+class ReservaConsulta(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    fecha: date | None = None
+    sala_id: int | None = Field(default=None, gt=0)
+    estudiante_id: int | None = Field(default=None, gt=0)
+    estado: Literal["activa", "cancelada"] | None = None
+    ordenar_por: Literal["fecha", "hora_inicio", "hora_fin", "id"] = "id"
+    direccion: Literal["asc", "desc"] = "asc"
+    pagina: int = Field(default=1, ge=1)
+    limite: int = Field(default=10, ge=1, le=100)
+
+
+class ReservaPagina(BaseModel):
+    items: list[ReservaRespuesta]
+    total: int = Field(ge=0)
+    pagina: int = Field(ge=1)
+    limite: int = Field(ge=1, le=100)
+    total_paginas: int = Field(ge=0)

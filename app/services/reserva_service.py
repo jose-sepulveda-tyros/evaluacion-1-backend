@@ -1,7 +1,13 @@
 """Casos de uso de reservas y reglas de negocio."""
 
 from app.repositories import reserva_repository
-from app.schemas.reserva import ReservaActualizar, ReservaCrear, ReservaRespuesta
+from app.schemas.reserva import (
+    ReservaActualizar,
+    ReservaConsulta,
+    ReservaCrear,
+    ReservaPagina,
+    ReservaRespuesta,
+)
 
 
 class HorarioInvalidoError(ValueError):
@@ -69,8 +75,27 @@ def crear_reserva(datos: ReservaCrear) -> ReservaRespuesta:
     return reserva_repository.crear(datos)
 
 
-def listar_reservas() -> list[ReservaRespuesta]:
-    return reserva_repository.listar()
+def listar_reservas(consulta: ReservaConsulta) -> ReservaPagina:
+    reservas = reserva_repository.listar()
+    for campo in ("fecha", "sala_id", "estudiante_id", "estado"):
+        valor = getattr(consulta, campo)
+        if valor is not None:
+            reservas = [reserva for reserva in reservas if getattr(reserva, campo) == valor]
+
+    # El ID desempata para mantener un orden determinista entre páginas.
+    reservas.sort(
+        key=lambda reserva: (getattr(reserva, consulta.ordenar_por), reserva.id),
+        reverse=consulta.direccion == "desc",
+    )
+    total = len(reservas)
+    inicio = (consulta.pagina - 1) * consulta.limite
+    return ReservaPagina(
+        items=reservas[inicio:inicio + consulta.limite],
+        total=total,
+        pagina=consulta.pagina,
+        limite=consulta.limite,
+        total_paginas=(total + consulta.limite - 1) // consulta.limite,
+    )
 
 
 def obtener_reserva(reserva_id: int) -> ReservaRespuesta:
