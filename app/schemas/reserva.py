@@ -25,5 +25,11 @@ class ReservaCrear(BaseModel):
         return valor
 
 
+class ReservaActualizar(ReservaCrear):
+    """PUT reemplaza todos los datos editables y exige un estado explícito."""
+
+    estado: Literal["activa", "cancelada"]
+
+
 class ReservaRespuesta(ReservaCrear):
     id: int = Field(gt=0, strict=True)
