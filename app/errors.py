@@ -5,7 +5,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.schemas.error import DetalleValidacion, ErrorDetalle, ErrorRespuesta
-from app.services.reserva_service import HorarioInvalidoError, ReservaNoEncontradaError
+from app.services.reserva_service import (
+    HorarioInvalidoError,
+    LimiteReservasError,
+    ReservaNoEncontradaError,
+    ReservaSuperpuestaError,
+)
 
 
 def registrar_manejadores(app: FastAPI) -> None:
@@ -24,6 +29,24 @@ def registrar_manejadores(app: FastAPI) -> None:
     ) -> JSONResponse:
         respuesta = ErrorRespuesta(
             error=ErrorDetalle(code="INVALID_TIME_RANGE", message=str(exc))
+        )
+        return JSONResponse(status_code=400, content=respuesta.model_dump(mode="json"))
+
+    @app.exception_handler(ReservaSuperpuestaError)
+    async def reserva_superpuesta(
+        request: Request, exc: ReservaSuperpuestaError
+    ) -> JSONResponse:
+        respuesta = ErrorRespuesta(
+            error=ErrorDetalle(code="RESERVATION_OVERLAP", message=str(exc))
+        )
+        return JSONResponse(status_code=409, content=respuesta.model_dump(mode="json"))
+
+    @app.exception_handler(LimiteReservasError)
+    async def limite_reservas(
+        request: Request, exc: LimiteReservasError
+    ) -> JSONResponse:
+        respuesta = ErrorRespuesta(
+            error=ErrorDetalle(code="DAILY_RESERVATION_LIMIT", message=str(exc))
         )
         return JSONResponse(status_code=400, content=respuesta.model_dump(mode="json"))
 

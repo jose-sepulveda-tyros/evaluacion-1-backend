@@ -15,12 +15,13 @@ router = APIRouter(prefix="/reservas", tags=["Reservas"])
     status_code=status.HTTP_201_CREATED,
     summary="Crear una reserva",
     responses={
-        400: {"model": ErrorRespuesta, "description": "El horario viola una regla de negocio"},
+        400: {"model": ErrorRespuesta, "description": "Horario inválido o límite diario de reservas excedido"},
+        409: {"model": ErrorRespuesta, "description": "La sala tiene una reserva superpuesta"},
         422: {"model": ErrorRespuesta, "description": "Datos de entrada inválidos"},
     },
 )
 async def crear_reserva(datos: ReservaCrear, response: Response) -> ReservaRespuesta:
-    """Registra una reserva en memoria y genera su ID; valida el orden de las horas."""
+    """Crea una reserva; valida horarios, superposiciones y el límite diario de activas."""
     reserva = reserva_service.crear_reserva(datos)
     response.headers["Location"] = f"/reservas/{reserva.id}"
     return reserva
@@ -53,8 +54,9 @@ async def obtener_reserva(
     response_model=ReservaRespuesta,
     summary="Actualizar una reserva",
     responses={
-        400: {"model": ErrorRespuesta, "description": "El horario viola una regla de negocio"},
+        400: {"model": ErrorRespuesta, "description": "Horario inválido o límite diario de reservas excedido"},
         404: {"model": ErrorRespuesta, "description": "La reserva no existe"},
+        409: {"model": ErrorRespuesta, "description": "La sala tiene una reserva superpuesta"},
         422: {"model": ErrorRespuesta, "description": "Datos de entrada inválidos"},
     },
 )
@@ -62,7 +64,7 @@ async def actualizar_reserva(
     reserva_id: Annotated[int, Path(gt=0, description="Identificador de la reserva")],
     datos: ReservaActualizar,
 ) -> ReservaRespuesta:
-    """Reemplaza todos los campos editables de una reserva existente y conserva su ID."""
+    """Reemplaza los campos y conserva el ID, aplicando las mismas reglas de creación."""
     return reserva_service.actualizar_reserva(reserva_id, datos)
 
 
