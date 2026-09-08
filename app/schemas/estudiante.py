@@ -10,7 +10,8 @@ class EstudianteCrear(BaseModel):
     activo: bool = True
 
 class EstudianteActualizar(EstudianteCrear):
-    """PUT /estudiantes/{id}"""              # Si quitan lo de azul tirara error,
-                                             # ya que por defecto no se puede tener una clase vacia.
+    pass
+
+
 class EstudianteRespuesta(EstudianteCrear):
     id: int = Field(gt=0, strict=True)
