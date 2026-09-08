@@ -1,0 +1,162 @@
+
+### Variables
+@baseUrl = http://127.0.0.1:8000
+
+### 1. Crear Estudiante
+POST {{baseUrl}}/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez",
+  "carrera": "PSICOLOGIA ",
+  "correo": "juan.perez@alumnos.cl",
+  "activo": true
+}
+
+### 2. Crear Sala
+POST {{baseUrl}}/salas
+Content-Type: application/json
+
+{
+  "nombre": "Sala A1",
+  "capacidad": 6,
+  "ubicacion": "Biblioteca Piso 2",
+  "equipamiento": "Pizarra"
+}
+
+### 3. Crear Reserva Válida
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 4. Consultar Reserva por ID
+GET {{baseUrl}}/reservas/1
+
+### 5. Prueba de Error: Choque de Horario (400 Bad Request / 409 Conflict)
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "11:00",
+  "hora_fin": "13:00",
+  "cantidad_personas": 2,
+  "estado": "activa"
+}
+
+### 6. Filtrado, Ordenamiento y Paginación
+GET {{baseUrl}}/reservas?estado=activa&ordenar_por=fecha&direccion=asc&pagina=1&limite=10
+ ### 7. prueba de Errores: recursos inexistentes (404/400 -existencias relacionadas)
+POST {{baseUrl}}/reservas
+ Content-Type: application/json
+
+ {
+ "sala_id":1,
+ "estudiante_id":99999,
+ "fecha": "2026-09-20",
+ "hora_inicio": "14:00",
+ "hora_fin":"16:00",
+ "cantidad_personas": 2,
+  "estado": "activa"
+}
+
+### 8. PRUEBA DE ERROR: Horario Inválido (400 - regla de negocio: hora_fin > hora_inicio)
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "16:00",
+  "hora_fin": "14:00",
+  "cantidad_personas": 2,
+  "estado": "activa"
+}
+
+### 9. PRUEBA DE ERROR: Exceso de Capacidad (400 - regla de negocio)
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-21",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 10,
+  "estado": "activa"
+}
+
+### 10. Actualizar Reserva (PUT/PATCH -> 200 OK)
+# Ajusta el método (PUT o PATCH) según lo que hayan implementado
+PATCH {{baseUrl}}/reservas/1
+Content-Type: application/json
+
+{
+  "cantidad_personas": 3
+}
+
+### 11. Eliminar Reserva (DELETE -> 204 No Content)
+DELETE {{baseUrl}}/reservas/1
+
+### 12. VALIDACIÓN - Longitud (nombre vacío o muy corto en Estudiante)
+POST {{baseUrl}}/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "carrera": "Ingeniería Civil Informática",
+  "correo": "vacio@alumnos.cl",
+  "activo": true
+}
+
+### 13. VALIDACIÓN - Numérica (cantidad_personas menor o igual a 0)
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-22",
+  "hora_inicio": "10:00",
+  "hora_fin": "11:00",
+  "cantidad_personas": 0,
+  "estado": "activa"
+}
+
+### 14. VALIDACIÓN - Valores permitidos / Enum (estado inválido)
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-22",
+  "hora_inicio": "12:00",
+  "hora_fin": "13:00",
+  "cantidad_personas": 2,
+  "estado": "no_existe"
+}
+
+### 15. VALIDACIÓN - Formato (correo mal formado en Estudiante)
+POST {{baseUrl}}/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "Ana Soto",
+  "carrera": "Psicología",
+  "correo": "correo_sin_arroba.cl",
+  "activo": true
+}
