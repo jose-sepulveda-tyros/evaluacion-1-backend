@@ -15,6 +15,9 @@ from app.services.reserva_service import (
 )
 
 
+from app.services.sala_service import CapacidadEnConflictoError, SalaNoEncontradaError
+
+
 def registrar_manejadores(app: FastAPI) -> None:
     @app.exception_handler(ReservaNoEncontradaError)
     async def reserva_no_encontrada(
@@ -69,6 +72,22 @@ def registrar_manejadores(app: FastAPI) -> None:
             error=ErrorDetalle(code="DAILY_RESERVATION_LIMIT", message=str(exc))
         )
         return JSONResponse(status_code=400, content=respuesta.model_dump(mode="json"))
+
+    @app.exception_handler(SalaNoEncontradaError)
+    async def sala_no_encontrada(request: Request, exc: SalaNoEncontradaError) -> JSONResponse:
+        respuesta = ErrorRespuesta(
+            error=ErrorDetalle(code="RESOURCE_NOT_FOUND", message=str(exc))
+        )
+        return JSONResponse(status_code=404, content=respuesta.model_dump(mode="json"))
+
+    @app.exception_handler(CapacidadEnConflictoError)
+    async def capacidad_en_conflicto(
+        request: Request, exc: CapacidadEnConflictoError
+    ) -> JSONResponse:
+        respuesta = ErrorRespuesta(
+            error=ErrorDetalle(code="ROOM_CAPACITY_CONFLICT", message=str(exc))
+        )
+        return JSONResponse(status_code=409, content=respuesta.model_dump(mode="json"))
 
     @app.exception_handler(RequestValidationError)
     async def datos_invalidos(
