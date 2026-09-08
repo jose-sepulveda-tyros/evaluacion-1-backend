@@ -6,6 +6,8 @@ from fastapi.responses import JSONResponse
 
 from app.schemas.error import DetalleValidacion, ErrorDetalle, ErrorRespuesta
 from app.services.reserva_service import (
+    CapacidadExcedidaError,
+    RecursoRelacionadoNoEncontradoError,
     HorarioInvalidoError,
     LimiteReservasError,
     ReservaNoEncontradaError,
@@ -22,6 +24,24 @@ def registrar_manejadores(app: FastAPI) -> None:
             error=ErrorDetalle(code="RESOURCE_NOT_FOUND", message=str(exc))
         )
         return JSONResponse(status_code=404, content=respuesta.model_dump(mode="json"))
+
+    @app.exception_handler(RecursoRelacionadoNoEncontradoError)
+    async def recurso_relacionado_no_encontrado(
+        request: Request, exc: RecursoRelacionadoNoEncontradoError
+    ) -> JSONResponse:
+        respuesta = ErrorRespuesta(
+            error=ErrorDetalle(code="RESOURCE_NOT_FOUND", message=str(exc))
+        )
+        return JSONResponse(status_code=404, content=respuesta.model_dump(mode="json"))
+
+    @app.exception_handler(CapacidadExcedidaError)
+    async def capacidad_excedida(
+        request: Request, exc: CapacidadExcedidaError
+    ) -> JSONResponse:
+        respuesta = ErrorRespuesta(
+            error=ErrorDetalle(code="ROOM_CAPACITY_EXCEEDED", message=str(exc))
+        )
+        return JSONResponse(status_code=400, content=respuesta.model_dump(mode="json"))
 
     @app.exception_handler(HorarioInvalidoError)
     async def horario_invalido(
