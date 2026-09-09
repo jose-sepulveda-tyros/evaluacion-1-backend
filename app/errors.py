@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 
 from app.schemas.error import DetalleValidacion, ErrorDetalle, ErrorRespuesta
 from app.services.estudiante_service import EstudianteNoEncontradoError
+from app.services.incidencia_service import IncidenciaNoEncontradaError
 from app.services.reserva_service import (
     CapacidadExcedidaError,
     RecursoRelacionadoNoEncontradoError,
@@ -93,6 +94,15 @@ def registrar_manejadores(app: FastAPI) -> None:
     @app.exception_handler(EstudianteNoEncontradoError)
     async def estudiante_no_encontrado(
         request: Request, exc: EstudianteNoEncontradoError
+    ) -> JSONResponse:
+        respuesta = ErrorRespuesta(
+            error=ErrorDetalle(code="RESOURCE_NOT_FOUND", message=str(exc))
+        )
+        return JSONResponse(status_code=404, content=respuesta.model_dump(mode="json"))
+
+    @app.exception_handler(IncidenciaNoEncontradaError)
+    async def incidencia_no_encontrada(
+        request: Request, exc: IncidenciaNoEncontradaError
     ) -> JSONResponse:
         respuesta = ErrorRespuesta(
             error=ErrorDetalle(code="RESOURCE_NOT_FOUND", message=str(exc))
