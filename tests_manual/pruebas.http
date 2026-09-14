@@ -1,0 +1,604 @@
+# Colección de pruebas del equipo.
+# Amplía la colección inicial del rol 4 (rama feature/prueba-calidad, e1c7ed7).
+# Ejecutar EN ORDEN sobre una instancia recién iniciada y vacía.
+# Reiniciar Uvicorn antes de repetir: los datos e IDs viven en memoria.
+# Uso manual: extensión REST Client de VS Code, opción Send Request.
+# Uso automático: python tests_manual/verificar_coleccion.py
+# Las líneas "# expect" documentan el resultado y las comprueba el verificador.
+# No ejecutar contra una instancia con datos que se quieran conservar.
+@baseUrl = http://127.0.0.1:8000
+
+### 01. Estudiantes inicialmente vacíos
+# expect {"status": 200, "body": {"$": []}}
+GET {{baseUrl}}/estudiantes
+
+### 02. Salas inicialmente vacías
+# expect {"status": 200, "body": {"$": []}}
+GET {{baseUrl}}/salas
+
+### 03. Reservas inicialmente vacías
+# expect {"status": 200, "body": {"items": [], "total": 0, "pagina": 1, "limite": 10, "total_paginas": 0}}
+GET {{baseUrl}}/reservas
+
+### 04. Incidencias inicialmente vacías
+# expect {"status": 200, "body": {"$": []}}
+GET {{baseUrl}}/incidencias
+
+### 05. Crear estudiante
+# expect {"status": 201, "body": {"id": 1, "correo": "juan@example.com"}, "headers": {"Location": "/estudiantes/1"}}
+POST {{baseUrl}}/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez",
+  "carrera": "Psicología",
+  "correo": "juan@example.com",
+  "activo": true
+}
+
+### 06. Crear segundo estudiante
+# expect {"status": 201, "body": {"id": 2}}
+POST {{baseUrl}}/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "Ana Soto",
+  "carrera": "Psicología",
+  "correo": "ana@example.com",
+  "activo": true
+}
+
+### 07. Consultar estudiante
+# expect {"status": 200, "body": {"nombre": "Juan Pérez"}}
+GET {{baseUrl}}/estudiantes/1
+
+### 08. Listar estudiantes
+# expect {"status": 200, "body": {"0.id": 1, "1.id": 2}}
+GET {{baseUrl}}/estudiantes
+
+### 09. Crear sala con equipamiento como lista
+# expect {"status": 201, "body": {"id": 1, "capacidad": 6}, "headers": {"Location": "/salas/1"}}
+POST {{baseUrl}}/salas
+Content-Type: application/json
+
+{
+  "nombre": "Sala A1",
+  "capacidad": 6,
+  "ubicacion": "Biblioteca Piso 2",
+  "equipamiento": [
+    "Pizarra"
+  ]
+}
+
+### 10. Crear segunda sala
+# expect {"status": 201, "body": {"id": 2}}
+POST {{baseUrl}}/salas
+Content-Type: application/json
+
+{
+  "nombre": "Sala A2",
+  "capacidad": 2,
+  "ubicacion": "Biblioteca Piso 2",
+  "equipamiento": [
+    "Pizarra"
+  ]
+}
+
+### 11. Consultar sala
+# expect {"status": 200, "body": {"equipamiento": ["Pizarra"]}}
+GET {{baseUrl}}/salas/1
+
+### 12. Listar salas
+# expect {"status": 200, "body": {"0.id": 1, "1.id": 2}}
+GET {{baseUrl}}/salas
+
+### 13. Actualizar sala sin reservas
+# expect {"status": 200, "body": {"id": 2, "capacidad": 3}}
+PUT {{baseUrl}}/salas/2
+Content-Type: application/json
+
+{
+  "nombre": "Sala A2",
+  "capacidad": 3,
+  "ubicacion": "Biblioteca Piso 2",
+  "equipamiento": [
+    "Pizarra"
+  ]
+}
+
+### 14. Crear reserva válida
+# expect {"status": 201, "body": {"id": 1, "cantidad_personas": 4}, "headers": {"Location": "/reservas/1"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 15. Crear segunda reserva contigua
+# expect {"status": 201, "body": {"id": 2}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "12:00",
+  "hora_fin": "13:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 16. Otro estudiante y horario contiguo anterior
+# expect {"status": 201, "body": {"id": 3}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 2,
+  "fecha": "2026-09-20",
+  "hora_inicio": "09:00",
+  "hora_fin": "10:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 17. Consultar reserva
+# expect {"status": 200, "body": {"id": 1, "sala_id": 1, "estudiante_id": 1}}
+GET {{baseUrl}}/reservas/1
+
+### 18. Superposición
+# expect {"status": 409, "body": {"error.code": "RESERVATION_OVERLAP"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 2,
+  "fecha": "2026-09-20",
+  "hora_inicio": "11:00",
+  "hora_fin": "13:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 19. Tercera reserva activa diaria
+# expect {"status": 400, "body": {"error.code": "DAILY_RESERVATION_LIMIT"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "14:00",
+  "hora_fin": "15:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 20. Cancelada no ocupa horario ni consume cupo
+# expect {"status": 201, "body": {"id": 4}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 4,
+  "estado": "cancelada"
+}
+
+### 21. Filtrar, ordenar y paginar con varios resultados
+# expect {"status": 200, "body": {"items.0.id": 1, "total": 3, "pagina": 2, "limite": 1, "total_paginas": 3}}
+GET {{baseUrl}}/reservas?sala_id=1&estado=activa&ordenar_por=hora_inicio&direccion=desc&pagina=2&limite=1
+
+### 22. Combinar los cuatro filtros
+# expect {"status": 200, "body": {"items.0.id": 1, "items.1.id": 2, "total": 2}}
+GET {{baseUrl}}/reservas?fecha=2026-09-20&sala_id=1&estudiante_id=1&estado=activa&ordenar_por=hora_inicio&direccion=asc
+
+### 23. Página fuera de rango conserva metadatos
+# expect {"status": 200, "body": {"items": [], "total": 3, "total_paginas": 2}}
+GET {{baseUrl}}/reservas?estado=activa&pagina=9&limite=2
+
+### 24. Filtro sin coincidencias
+# expect {"status": 200, "body": {"items": [], "total": 0, "total_paginas": 0}}
+GET {{baseUrl}}/reservas?sala_id=999
+
+### 25. Sala inexistente
+# expect {"status": 404, "body": {"error.code": "RESOURCE_NOT_FOUND"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 999,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 26. Estudiante inexistente
+# expect {"status": 404, "body": {"error.code": "RESOURCE_NOT_FOUND"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 999,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 27. Horario invertido
+# expect {"status": 400, "body": {"error.code": "INVALID_TIME_RANGE"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "16:00",
+  "hora_fin": "14:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 28. Horario de duración cero
+# expect {"status": 400, "body": {"error.code": "INVALID_TIME_RANGE"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "10:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 29. Exceso de capacidad
+# expect {"status": 400, "body": {"error.code": "ROOM_CAPACITY_EXCEEDED"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 7,
+  "estado": "activa"
+}
+
+### 30. Longitud mínima
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "carrera": "Psicología",
+  "correo": "juan@example.com",
+  "activo": true
+}
+
+### 31. Correo inválido
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez",
+  "carrera": "Psicología",
+  "correo": "correo_sin_arroba.cl",
+  "activo": true
+}
+
+### 32. Cantidad no positiva
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 0,
+  "estado": "activa"
+}
+
+### 33. Estado fuera del conjunto permitido
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 4,
+  "estado": "no_existe"
+}
+
+### 34. Fecha imposible
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-02-30",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 35. Consulta inválida: pagina=0
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+GET {{baseUrl}}/reservas?pagina=0
+
+### 36. Consulta inválida: limite=101
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+GET {{baseUrl}}/reservas?limite=101
+
+### 37. Consulta inválida: direccion=otro
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+GET {{baseUrl}}/reservas?direccion=otro
+
+### 38. Consulta inválida: ordenar_por=correo
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+GET {{baseUrl}}/reservas?ordenar_por=correo
+
+### 39. Actualizar reserva con PUT completo
+# expect {"status": 200, "body": {"id": 1, "cantidad_personas": 3}}
+PUT {{baseUrl}}/reservas/1
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 3,
+  "estado": "activa"
+}
+
+### 40. PUT incompleto
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+PUT {{baseUrl}}/reservas/1
+Content-Type: application/json
+
+{
+  "cantidad_personas": 2
+}
+
+### 41. PUT con horario inválido
+# expect {"status": 400, "body": {"error.code": "INVALID_TIME_RANGE"}}
+PUT {{baseUrl}}/reservas/1
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "09:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 42. Rechazos no alteran reserva
+# expect {"status": 200, "body": {"cantidad_personas": 3, "hora_fin": "12:00:00"}}
+GET {{baseUrl}}/reservas/1
+
+### 43. Reactivación superpuesta
+# expect {"status": 409, "body": {"error.code": "RESERVATION_OVERLAP"}}
+PUT {{baseUrl}}/reservas/4
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "10:00",
+  "hora_fin": "12:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 44. Reducir capacidad incompatible
+# expect {"status": 409, "body": {"error.code": "ROOM_CAPACITY_CONFLICT"}}
+PUT {{baseUrl}}/salas/1
+Content-Type: application/json
+
+{
+  "nombre": "Sala A1",
+  "capacidad": 2,
+  "ubicacion": "Biblioteca Piso 2",
+  "equipamiento": [
+    "Pizarra"
+  ]
+}
+
+### 45. Capacidad original conservada
+# expect {"status": 200, "body": {"capacidad": 6}}
+GET {{baseUrl}}/salas/1
+
+### 46. Cancelar libera cupo diario
+# expect {"status": 200, "body": {"estado": "cancelada"}}
+PUT {{baseUrl}}/reservas/2
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "12:00",
+  "hora_fin": "13:00",
+  "cantidad_personas": 4,
+  "estado": "cancelada"
+}
+
+### 47. Crear tras liberar cupo
+# expect {"status": 201, "body": {"id": 5}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "14:00",
+  "hora_fin": "15:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 48. Reactivar supera límite diario
+# expect {"status": 400, "body": {"error.code": "DAILY_RESERVATION_LIMIT"}}
+PUT {{baseUrl}}/reservas/2
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "12:00",
+  "hora_fin": "13:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 49. Registrar incidencia
+# expect {"status": 201, "body": {"id": 1, "resuelto": false}}
+POST {{baseUrl}}/incidencias
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "reporte": "La pizarra está rota",
+  "fecha": "2026-09-20"
+}
+
+### 50. Incidencia para sala inexistente
+# expect {"status": 404, "body": {"error.code": "RESOURCE_NOT_FOUND"}}
+POST {{baseUrl}}/incidencias
+Content-Type: application/json
+
+{
+  "sala_id": 999,
+  "reporte": "La pizarra está rota",
+  "fecha": "2026-09-20"
+}
+
+### 51. Listar incidencias
+# expect {"status": 200, "body": {"0.id": 1, "0.reporte": "La pizarra está rota"}}
+GET {{baseUrl}}/incidencias
+
+### 52. Resolver incidencia
+# expect {"status": 200, "body": {"id": 1, "resuelto": true, "reporte": "La pizarra está rota", "sala_id": 1, "fecha": "2026-09-20"}}
+PUT {{baseUrl}}/incidencias/1
+Content-Type: application/json
+
+{
+  "resuelto": true
+}
+
+### 53. Reabrir incidencia
+# expect {"status": 200, "body": {"resuelto": false}}
+PUT {{baseUrl}}/incidencias/1
+Content-Type: application/json
+
+{
+  "resuelto": false
+}
+
+### 54. Incidencia inexistente
+# expect {"status": 404, "body": {"error.code": "RESOURCE_NOT_FOUND"}}
+PUT {{baseUrl}}/incidencias/999
+Content-Type: application/json
+
+{
+  "resuelto": true
+}
+
+### 55. Incidencia rechaza otros campos
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+PUT {{baseUrl}}/incidencias/1
+Content-Type: application/json
+
+{
+  "resuelto": true,
+  "reporte": "Otro reporte"
+}
+
+### 56. Estudiante inexistente en consulta
+# expect {"status": 404, "body": {"error.code": "RESOURCE_NOT_FOUND"}}
+GET {{baseUrl}}/estudiantes/999
+
+### 57. Sala inexistente en consulta
+# expect {"status": 404, "body": {"error.code": "RESOURCE_NOT_FOUND"}}
+GET {{baseUrl}}/salas/999
+
+### 58. ID de reserva inválido
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+GET {{baseUrl}}/reservas/0
+
+### 59. Eliminar reserva sin cuerpo
+# expect {"status": 204}
+DELETE {{baseUrl}}/reservas/5
+
+### 60. Consultar reserva eliminada
+# expect {"status": 404, "body": {"error.code": "RESOURCE_NOT_FOUND"}}
+GET {{baseUrl}}/reservas/5
+
+### 61. Eliminar nuevamente
+# expect {"status": 404, "body": {"error.code": "RESOURCE_NOT_FOUND"}}
+DELETE {{baseUrl}}/reservas/5
+
+### 62. Reactivar después de eliminar
+# expect {"status": 200, "body": {"estado": "activa"}}
+PUT {{baseUrl}}/reservas/2
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-09-20",
+  "hora_inicio": "12:00",
+  "hora_fin": "13:00",
+  "cantidad_personas": 4,
+  "estado": "activa"
+}
+
+### 63. Estado final de la colección
+# expect {"status": 200, "body": {"total": 4, "items.0.id": 1, "items.3.id": 4}}
+GET {{baseUrl}}/reservas
