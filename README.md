@@ -54,3 +54,9 @@ Swagger UI: http://127.0.0.1:8000/docs
 * P3 - Operaciones CRUD: Endpoints para creación (`POST`), lectura (`GET`), actualización (`PUT`/`PATCH`) y eliminación (`DELETE`).
 
 * P4 - Reglas de Negocio: Validación en capa de servicios para prevenir solapamiento/conflictos de datos y control de capacidad o disponibilidad.
+
+* P5 - Manejo de Errores y Códigos HTTP: Emisión de respuestas estandarizadas usando `HTTPException` (200 OK, 201 Created, 400 Bad Request, 404 Not Found, 422 Unprocessable Entity).
+
+* P6 - Paginación y Filtrado: Parámetros de consulta (`Query Params`) para filtrar registros por atributos específicos y limitar/paginar los resultados devueltos.
+
+* P7 - Pruebas y Validación End-to-End: Verificación del correcto funcionamiento con colecciones de pruebas en Postman / Thunder Client.
