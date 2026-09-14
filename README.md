@@ -47,7 +47,10 @@ Swagger UI: http://127.0.0.1:8000/docs
 
 # Contrato de Endpoints y Requisitos (P1 - P7)
 
-* **P1 - Documentación y Estructura Base:** Configuración general del proyecto, Swagger UI accesible en `/docs` y definición de schemas/DTOs mediante Pydantic.
-* **P2 - Definición de Entidades de Dominio:** Implementación de las 4 entidades principales con tipos de datos estrictos y validaciones de atributos.
-* **P3 - Operaciones CRUD:** Endpoints para creación (`POST`), lectura (`GET`), actualización (`PUT`/`PATCH`) y eliminación (`DELETE`).
-* **P4 - Reglas de Negocio:** Validación en capa de servicios para prevenir solapamiento/conflictos de datos y control de capacidad o disponibilidad.
+* P1 - Documentación y Estructura Base: Configuración general del proyecto, Swagger UI accesible en `/docs` y definición de schemas/DTOs mediante Pydantic.
+
+* P2 - Definición de Entidades de Dominio: Implementación de las 4 entidades principales con tipos de datos estrictos y validaciones de atributos.
+
+* P3 - Operaciones CRUD: Endpoints para creación (`POST`), lectura (`GET`), actualización (`PUT`/`PATCH`) y eliminación (`DELETE`).
+
+* P4 - Reglas de Negocio: Validación en capa de servicios para prevenir solapamiento/conflictos de datos y control de capacidad o disponibilidad.
