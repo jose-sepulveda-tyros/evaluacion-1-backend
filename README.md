@@ -24,3 +24,15 @@ uvicorn app.main:app --reload
 ```
 
 Swagger UI: http://127.0.0.1:8000/docs
+
+# API Backend - Sistema de Gestión FastAPI
+
+## Integrantes y Responsabilidades:
+
+* Rol 1 (Coordinación y Documentación): Organización de tareas, creación y mantenimiento del README, especificación del contrato de endpoints (P1-P7), revisión de documentación OpenAPI/Swagger, integración de ramas Git y coordinación de la presentación final.
+
+* Rol 2 (Dominio y Datos): Definición de las 4 entidades del dominio, sus atributos, relaciones, schemas/DTOs, validaciones y gestión de almacenamiento en memoria.
+
+* Rol 3 (API y Lógica de Negocio): Implementación de endpoints, ruteo, servicios, operaciones CRUD, reglas de negocio y manejo de excepciones/errores HTTP.
+
+* Rol 4 (Calidad y Pruebas):Pruebas integrales de endpoints en Postman/Thunder Client, verificación de respuestas HTTP, filtros, ordenamiento y paginación.
