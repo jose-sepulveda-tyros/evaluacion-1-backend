@@ -27,7 +27,7 @@ Swagger UI: http://127.0.0.1:8000/docs
 
 # API Backend - Sistema de Gestión FastAPI
 
-## Integrantes y Responsabilidades:
+# Integrantes y Responsabilidades:
 
 * Rol 1 (Coordinación y Documentación): Organización de tareas, creación y mantenimiento del README, especificación del contrato de endpoints (P1-P7), revisión de documentación OpenAPI/Swagger, integración de ramas Git y coordinación de la presentación final.
 
@@ -36,3 +36,11 @@ Swagger UI: http://127.0.0.1:8000/docs
 * Rol 3 (API y Lógica de Negocio): Implementación de endpoints, ruteo, servicios, operaciones CRUD, reglas de negocio y manejo de excepciones/errores HTTP.
 
 * Rol 4 (Calidad y Pruebas):Pruebas integrales de endpoints en Postman/Thunder Client, verificación de respuestas HTTP, filtros, ordenamiento y paginación.
+
+# Tecnologías Utilizadas
+
+* Lenguaje: Python 3.10+.
+* Framework Web: FastAPI.
+* Servidor ASGI: Uvicorn.
+* Validación de Datos: Pydantic.
+* Documentación Interactiva: Swagger UI / OpenAPI (`http://127.0.0.1:8000/docs`).
