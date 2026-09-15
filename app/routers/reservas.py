@@ -21,13 +21,17 @@ router = APIRouter(prefix="/reservas", tags=["Reservas"])
     status_code=status.HTTP_201_CREATED,
     summary="Crear una reserva",
     responses={
-        400: {"model": ErrorRespuesta, "description": "Horario inválido o límite diario de reservas excedido"},
+        404: {"model": ErrorRespuesta, "description": "La sala o el estudiante no existe"},
+        400: {"model": ErrorRespuesta, "description": "Horario, capacidad o límite diario inválidos"},
         409: {"model": ErrorRespuesta, "description": "La sala tiene una reserva superpuesta"},
         422: {"model": ErrorRespuesta, "description": "Datos de entrada inválidos"},
     },
 )
 async def crear_reserva(datos: ReservaCrear, response: Response) -> ReservaRespuesta:
-    """Crea una reserva; valida horarios, superposiciones y el límite diario de activas."""
+    """Crea una reserva para una sala y un estudiante existentes.
+
+    Valida capacidad, horarios, superposiciones y el límite diario de activas.
+    """
     reserva = reserva_service.crear_reserva(datos)
     response.headers["Location"] = f"/reservas/{reserva.id}"
     return reserva
@@ -71,8 +75,8 @@ async def obtener_reserva(
     response_model=ReservaRespuesta,
     summary="Actualizar una reserva",
     responses={
-        400: {"model": ErrorRespuesta, "description": "Horario inválido o límite diario de reservas excedido"},
-        404: {"model": ErrorRespuesta, "description": "La reserva no existe"},
+        400: {"model": ErrorRespuesta, "description": "Horario, capacidad o límite diario inválidos"},
+        404: {"model": ErrorRespuesta, "description": "La reserva, la sala o el estudiante no existe"},
         409: {"model": ErrorRespuesta, "description": "La sala tiene una reserva superpuesta"},
         422: {"model": ErrorRespuesta, "description": "Datos de entrada inválidos"},
     },
