@@ -62,6 +62,8 @@ Se producen reservas duplicadas o superpuestas, estudiantes encuentran ocupadas 
 
 Cada sala puede tener muchas reservas e incidencias. Cada estudiante puede tener muchas reservas. Los servicios comprueban la existencia de los recursos relacionados antes de registrar los datos.
 
+Consulta el [diagrama de clases y relaciones del dominio](docs/modelo-dominio.md), con las cuatro entidades, sus atributos y multiplicidades.
+
 ### P5. Acciones que permite la API
 
 1. El sistema debe permitir registrar una reserva.
