@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Response, status
 
+from app import openapi_examples as doc
 from app.schemas.error import ErrorRespuesta
 from app.schemas.estudiante import EstudianteCrear, EstudianteRespuesta
 from app.services import estudiante_service
@@ -15,6 +16,14 @@ router = APIRouter(prefix="/estudiantes", tags=["Estudiantes"])
     status_code=status.HTTP_201_CREATED,
     summary="Crear un estudiante",
     responses={422: {"model": ErrorRespuesta, "description": "Datos del estudiante inválidos"}},
+    openapi_extra=doc.ejemplos(
+        entrada=doc.ESTUDIANTE,
+        codigo=201,
+        salida=doc.ESTUDIANTE_RESPUESTA,
+        errores={
+            422: {"campo_requerido": doc.validacion("body", "nombre")},
+        },
+    ),
 )
 async def crear_estudiante(datos: EstudianteCrear, response: Response) -> EstudianteRespuesta:
     """Registra nombre, carrera, correo y estado activo en memoria; genera un ID."""
@@ -23,7 +32,14 @@ async def crear_estudiante(datos: EstudianteCrear, response: Response) -> Estudi
     return estudiante
 
 
-@router.get("", response_model=list[EstudianteRespuesta], summary="Listar estudiantes")
+@router.get(
+    "",
+    response_model=list[EstudianteRespuesta],
+    summary="Listar estudiantes",
+    openapi_extra=doc.ejemplos(
+        salida=[doc.ESTUDIANTE_RESPUESTA],
+    ),
+)
 async def listar_estudiantes() -> list[EstudianteRespuesta]:
     """Devuelve todos los estudiantes registrados, incluidos los inactivos."""
     return estudiante_service.listar_estudiantes()
@@ -37,6 +53,13 @@ async def listar_estudiantes() -> list[EstudianteRespuesta]:
         404: {"model": ErrorRespuesta, "description": "El estudiante no existe"},
         422: {"model": ErrorRespuesta, "description": "ID inválido"},
     },
+    openapi_extra=doc.ejemplos(
+        salida=doc.ESTUDIANTE_RESPUESTA,
+        errores={
+            404: {"recurso": doc.no_encontrado("un estudiante")},
+            422: {"id_invalido": doc.validacion("path", "estudiante_id")},
+        },
+    ),
 )
 async def obtener_estudiante(
     estudiante_id: Annotated[int, Path(gt=0, description="Identificador del estudiante")],

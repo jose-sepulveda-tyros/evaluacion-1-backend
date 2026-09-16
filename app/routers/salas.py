@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Response, status
 
+from app import openapi_examples as doc
 from app.schemas.error import ErrorRespuesta
 from app.schemas.sala import SalaActualizar, SalaCrear, SalaRespuesta
 from app.services import sala_service
@@ -15,6 +16,14 @@ router = APIRouter(prefix="/salas", tags=["Salas"])
     status_code=status.HTTP_201_CREATED,
     summary="Crear una sala",
     responses={422: {"model": ErrorRespuesta, "description": "Datos de sala inválidos"}},
+    openapi_extra=doc.ejemplos(
+        entrada=doc.SALA,
+        codigo=201,
+        salida=doc.SALA_RESPUESTA,
+        errores={
+            422: {"campo_requerido": doc.validacion("body", "nombre")},
+        },
+    ),
 )
 async def crear_sala(datos: SalaCrear, response: Response) -> SalaRespuesta:
     """Registra una sala en memoria y genera su ID."""
@@ -23,7 +32,14 @@ async def crear_sala(datos: SalaCrear, response: Response) -> SalaRespuesta:
     return sala
 
 
-@router.get("", response_model=list[SalaRespuesta], summary="Listar salas")
+@router.get(
+    "",
+    response_model=list[SalaRespuesta],
+    summary="Listar salas",
+    openapi_extra=doc.ejemplos(
+        salida=[doc.SALA_RESPUESTA],
+    ),
+)
 async def listar_salas() -> list[SalaRespuesta]:
     """Devuelve todas las salas registradas en memoria."""
     return sala_service.listar_salas()
@@ -37,6 +53,13 @@ async def listar_salas() -> list[SalaRespuesta]:
         404: {"model": ErrorRespuesta, "description": "La sala no existe"},
         422: {"model": ErrorRespuesta, "description": "ID inválido"},
     },
+    openapi_extra=doc.ejemplos(
+        salida=doc.SALA_RESPUESTA,
+        errores={
+            404: {"recurso": doc.no_encontrado("una sala")},
+            422: {"id_invalido": doc.validacion("path", "sala_id")},
+        },
+    ),
 )
 async def obtener_sala(
     sala_id: Annotated[int, Path(gt=0, description="Identificador de la sala")],
@@ -54,6 +77,15 @@ async def obtener_sala(
         409: {"model": ErrorRespuesta, "description": "Capacidad incompatible con reservas activas"},
         422: {"model": ErrorRespuesta, "description": "Datos de sala inválidos"},
     },
+    openapi_extra=doc.ejemplos(
+        entrada=doc.SALA,
+        salida=doc.SALA_RESPUESTA,
+        errores={
+            409: {"capacidad": doc.CONFLICTO_CAPACIDAD},
+            404: {"recurso": doc.no_encontrado("una sala")},
+            422: {"campo_requerido": doc.validacion("body", "nombre"), "id_invalido": doc.validacion("path", "sala_id")},
+        },
+    ),
 )
 async def actualizar_sala(
     sala_id: Annotated[int, Path(gt=0, description="Identificador de la sala")],

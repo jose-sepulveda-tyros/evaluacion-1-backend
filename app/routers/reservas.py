@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Query, Response, status
 
+from app import openapi_examples as doc
 from app.schemas.error import ErrorRespuesta
 from app.schemas.reserva import (
     ReservaActualizar,
@@ -26,6 +27,17 @@ router = APIRouter(prefix="/reservas", tags=["Reservas"])
         409: {"model": ErrorRespuesta, "description": "La sala tiene una reserva superpuesta"},
         422: {"model": ErrorRespuesta, "description": "Datos de entrada inválidos"},
     },
+    openapi_extra=doc.ejemplos(
+        entrada=doc.RESERVA,
+        codigo=201,
+        salida=doc.RESERVA_RESPUESTA,
+        errores={
+            400: {"horario": doc.HORARIO, "capacidad": doc.CAPACIDAD, "limite_diario": doc.LIMITE},
+            409: {"superposicion": doc.SUPERPOSICION},
+            404: {"sala": doc.no_encontrado("una sala"), "estudiante": doc.no_encontrado("un estudiante")},
+            422: {"campo_requerido": doc.validacion("body", "sala_id")},
+        },
+    ),
 )
 async def crear_reserva(datos: ReservaCrear, response: Response) -> ReservaRespuesta:
     """Crea una reserva para una sala y un estudiante existentes.
@@ -42,6 +54,12 @@ async def crear_reserva(datos: ReservaCrear, response: Response) -> ReservaRespu
     response_model=ReservaPagina,
     summary="Listar reservas con filtros, ordenamiento y paginación",
     responses={422: {"model": ErrorRespuesta, "description": "Parámetros de consulta inválidos"}},
+    openapi_extra=doc.ejemplos(
+        salida=doc.PAGINA,
+        errores={
+            422: {"pagina_invalida": doc.validacion("query", "pagina")},
+        },
+    ),
 )
 async def listar_reservas(consulta: Annotated[ReservaConsulta, Query()]) -> ReservaPagina:
     """Filtra por fecha, sala, estudiante y estado; luego ordena y finalmente pagina.
@@ -62,6 +80,13 @@ async def listar_reservas(consulta: Annotated[ReservaConsulta, Query()]) -> Rese
         404: {"model": ErrorRespuesta, "description": "La reserva no existe"},
         422: {"model": ErrorRespuesta, "description": "ID inválido"},
     },
+    openapi_extra=doc.ejemplos(
+        salida=doc.RESERVA_RESPUESTA,
+        errores={
+            404: {"recurso": doc.no_encontrado("una reserva")},
+            422: {"id_invalido": doc.validacion("path", "reserva_id")},
+        },
+    ),
 )
 async def obtener_reserva(
     reserva_id: Annotated[int, Path(gt=0, description="Identificador de la reserva")],
@@ -80,6 +105,16 @@ async def obtener_reserva(
         409: {"model": ErrorRespuesta, "description": "La sala tiene una reserva superpuesta"},
         422: {"model": ErrorRespuesta, "description": "Datos de entrada inválidos"},
     },
+    openapi_extra=doc.ejemplos(
+        entrada=doc.RESERVA,
+        salida=doc.RESERVA_RESPUESTA,
+        errores={
+            400: {"horario": doc.HORARIO, "capacidad": doc.CAPACIDAD, "limite_diario": doc.LIMITE},
+            409: {"superposicion": doc.SUPERPOSICION},
+            404: {"recurso": doc.no_encontrado("una reserva"), "sala": doc.no_encontrado("una sala"), "estudiante": doc.no_encontrado("un estudiante")},
+            422: {"campo_requerido": doc.validacion("body", "sala_id"), "id_invalido": doc.validacion("path", "reserva_id")},
+        },
+    ),
 )
 async def actualizar_reserva(
     reserva_id: Annotated[int, Path(gt=0, description="Identificador de la reserva")],
@@ -98,6 +133,13 @@ async def actualizar_reserva(
         404: {"model": ErrorRespuesta, "description": "La reserva no existe"},
         422: {"model": ErrorRespuesta, "description": "ID inválido"},
     },
+    openapi_extra=doc.ejemplos(
+        codigo=204,
+        errores={
+            404: {"recurso": doc.no_encontrado("una reserva")},
+            422: {"id_invalido": doc.validacion("path", "reserva_id")},
+        },
+    ),
 )
 async def eliminar_reserva(
     reserva_id: Annotated[int, Path(gt=0, description="Identificador de la reserva")],
