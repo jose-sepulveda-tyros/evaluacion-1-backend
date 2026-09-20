@@ -1,6 +1,6 @@
 """Casos de uso de reservas y reglas de negocio."""
 
-from app.repositories import reserva_repository
+from app.repositories import estudiante_repository, reserva_repository, sala_repository
 from app.schemas.reserva import (
     ReservaActualizar,
     ReservaConsulta,
@@ -22,6 +22,14 @@ class LimiteReservasError(ValueError):
     pass
 
 
+class RecursoRelacionadoNoEncontradoError(LookupError):
+    pass
+
+
+class CapacidadExcedidaError(ValueError):
+    pass
+
+
 class ReservaNoEncontradaError(LookupError):
     pass
 
@@ -33,10 +41,27 @@ def validar_horario(datos: ReservaCrear | ReservaActualizar) -> None:
         )
 
 
+def validar_recursos_relacionados(datos: ReservaCrear | ReservaActualizar) -> None:
+    sala = sala_repository.obtener(datos.sala_id)
+    if sala is None:
+        raise RecursoRelacionadoNoEncontradoError(
+            f"No existe una sala con el ID {datos.sala_id}"
+        )
+    if not estudiante_repository.existe(datos.estudiante_id):
+        raise RecursoRelacionadoNoEncontradoError(
+            f"No existe un estudiante con el ID {datos.estudiante_id}"
+        )
+    if datos.cantidad_personas > sala.capacidad:
+        raise CapacidadExcedidaError(
+            f"La cantidad de personas no puede superar la capacidad de la sala ({sala.capacidad})"
+        )
+
+
 def validar_reserva(
     datos: ReservaCrear | ReservaActualizar, reserva_id: int | None = None
 ) -> None:
     validar_horario(datos)
+    validar_recursos_relacionados(datos)
     if datos.estado != "activa":
         return
 
@@ -70,8 +95,6 @@ def validar_reserva(
 
 def crear_reserva(datos: ReservaCrear) -> ReservaRespuesta:
     validar_reserva(datos)
-    # La existencia de sala/estudiante y la capacidad se integrarán
-    # cuando estén disponibles los recursos y contratos del rol 2.
     return reserva_repository.crear(datos)
 
 
