@@ -21,8 +21,8 @@ Content-Type: application/json
   "nombre": "Sala A1",
   "capacidad": 6,
   "ubicacion": "Biblioteca Piso 2",
-  "equipamiento": "Pizarra"
-}
+  "equipamiento": [ "Pizarra"
+       ]  }
 
 ### 3. Crear Reserva Válida
 POST {{baseUrl}}/reservas
@@ -57,7 +57,10 @@ Content-Type: application/json
 
 ### 6. Filtrado, Ordenamiento y Paginación
 GET {{baseUrl}}/reservas?estado=activa&ordenar_por=fecha&direccion=asc&pagina=1&limite=10
- ### 7. prueba de Errores: recursos inexistentes (404/400 -existencias relacionadas)
+
+
+ 
+### 7. prueba de Errores: recursos inexistentes (404/400 -existencias relacionadas)
 POST {{baseUrl}}/reservas
  Content-Type: application/json
 
@@ -101,7 +104,7 @@ Content-Type: application/json
 
 ### 10. Actualizar Reserva (PUT/PATCH -> 200 OK)
 # Ajusta el método (PUT o PATCH) según lo que hayan implementado
-PATCH {{baseUrl}}/reservas/1
+PUT  {{baseUrl}}/reservas/1
 Content-Type: application/json
 
 {
