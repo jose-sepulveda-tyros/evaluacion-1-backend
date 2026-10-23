@@ -1,3 +1,4 @@
+```text
 OK 01. Estudiantes inicialmente vacíos — HTTP 200
 OK 02. Salas inicialmente vacías — HTTP 200
 OK 03. Reservas inicialmente vacías — HTTP 200
@@ -62,3 +63,4 @@ OK 61. Eliminar nuevamente — HTTP 404
 OK 62. Reactivar después de eliminar — HTTP 200
 OK 63. Estado final de la colección — HTTP 200
 Resultado: 63 casos correctos; 15 operaciones cubiertas.
+```
