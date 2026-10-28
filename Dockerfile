@@ -10,6 +10,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY infrastructure ./infrastructure
+COPY presentation ./presentation
 
 # El contenedor no necesita privilegios de root.
 RUN useradd --create-home appuser

@@ -26,6 +26,8 @@ python -m pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+La continuación incorpora PostgreSQL. Para preparar la configuración local, copia `.env.example` como `.env` y cambia `DB_PASSWORD`. Puedes iniciar PostgreSQL con `docker compose up -d postgres` o usar una instalación local configurada con las mismas variables `DB_*`. No subas el archivo `.env` al repositorio.
+
 Si `python3` apunta a una versión anterior a 3.10, usa `python3.12 -m venv .venv`. En Windows, la activación en PowerShell es `.venv\Scripts\Activate.ps1`.
 
 - [Swagger UI](http://127.0.0.1:8000/docs): permite consultar los modelos y ejecutar solicitudes con **Try it out**.

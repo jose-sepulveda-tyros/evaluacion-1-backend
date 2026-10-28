@@ -2,6 +2,36 @@ services:
   api:
     build: .
     container_name: api-reservas
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-reservas}
+      DB_USER: ${DB_USER:-reservas}
+      DB_PASSWORD: ${DB_PASSWORD:?Copia .env.example a .env y configura DB_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "8000:8000"
     restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: reservas-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-reservas}
+      POSTGRES_USER: ${DB_USER:-reservas}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Copia .env.example a .env y configura DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - reservas_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-reservas} -d ${DB_NAME:-reservas}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  reservas_postgres_data:
