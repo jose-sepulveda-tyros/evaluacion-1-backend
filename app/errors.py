@@ -1,13 +1,14 @@
 """Convierte los errores de servicios y validación al contrato HTTP del proyecto."""
 
 from fastapi import FastAPI, Request
+from domain.errors import ConflictoPersistenciaError
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.schemas.error import DetalleValidacion, ErrorDetalle, ErrorRespuesta
-from app.services.estudiante_service import EstudianteNoEncontradoError
-from app.services.incidencia_service import IncidenciaNoEncontradaError
-from app.services.reserva_service import (
+from presentation.schemas.dtos.error import DetalleValidacion, ErrorDetalle, ErrorRespuesta
+from application.services.estudiante_service import EstudianteNoEncontradoError
+from application.services.incidencia_service import IncidenciaNoEncontradaError
+from application.services.reserva_service import (
     CapacidadExcedidaError,
     RecursoRelacionadoNoEncontradoError,
     HorarioInvalidoError,
@@ -17,10 +18,15 @@ from app.services.reserva_service import (
 )
 
 
-from app.services.sala_service import CapacidadEnConflictoError, SalaNoEncontradaError
+from application.services.sala_service import CapacidadEnConflictoError, SalaNoEncontradaError
 
 
 def registrar_manejadores(app: FastAPI) -> None:
+    @app.exception_handler(ConflictoPersistenciaError)
+    async def conflicto_persistencia(request: Request, exc: ConflictoPersistenciaError) -> JSONResponse:
+        respuesta = ErrorRespuesta(error=ErrorDetalle(code="PERSISTENCE_CONFLICT", message=str(exc)))
+        return JSONResponse(status_code=409, content=respuesta.model_dump(mode="json"))
+
     @app.exception_handler(ReservaNoEncontradaError)
     async def reserva_no_encontrada(
         request: Request, exc: ReservaNoEncontradaError

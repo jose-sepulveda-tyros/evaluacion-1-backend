@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 
 from app.errors import registrar_manejadores
-from app.routers.estudiantes import router as estudiantes_router
-from app.routers.incidencias import router as incidencias_router
-from app.routers.reservas import router as reservas_router
-from app.routers.salas import router as salas_router
+from presentation.routers.estudiantes import router as estudiantes_router
+from presentation.routers.incidencias import router as incidencias_router
+from presentation.routers.reservas import router as reservas_router
+from presentation.routers.salas import router as salas_router
 
 app = FastAPI(
     title="API de Reservas",
