@@ -56,3 +56,24 @@ Comandos: `docker compose up --build -d`, `docker compose ps`, `curl http://127.
 | Colección HTTP | 63 casos; 15 operaciones | 63 correctos; 15 cubiertas |
 
 El `Dockerfile` ejecuta `alembic upgrade head` antes de iniciar Uvicorn, por lo que una base vacía queda lista al levantar el contenedor.
+
+## Instalación limpia con Docker - 30 de octubre de 2026
+
+Se verificó una copia de los archivos versionados del commit `cdd68d1`, exportada con `git archive HEAD`, sin reutilizar `.env`, `.venv` ni datos del proyecto. La API y sus dependencias se construyeron dentro de Docker con Python 3.12.
+
+Para aislar la comprobación se usaron un nombre de proyecto Compose, nombres de contenedores y puertos temporales distintos. La copia recibió un `.env` de prueba con credenciales generadas. No se modificaron los archivos, contenedores o datos de la instancia normal.
+
+| Comprobación | Resultado esperado | Resultado obtenido |
+|---|---|---|
+| Construir API desde la copia limpia | Dependencias y archivos completos | Imagen construida correctamente |
+| Arrancar API y PostgreSQL desde volumen nuevo | Ambos saludables; migraciones automáticas | Ambos `healthy`; `GET /salas` devolvió 200 y lista vacía |
+| Ejecutar seeders y repetir | 3 salas, 3 estudiantes, 5 reservas, 2 incidencias; sin duplicados | Cantidades correctas; segunda carga omitida |
+| Consultar reservas activas, ID descendente, página 2, límite 2 | Total 4, dos páginas, IDs 2 y 1 | Valores correctos |
+| Reiniciar el contenedor API | Misma colección de reservas | Igualdad comprobada antes y después |
+| Verificador PostgreSQL de la copia | 63 casos; 15 operaciones; migraciones, reinicio y concurrencia | Todas las comprobaciones correctas |
+
+Comandos principales ejecutados en la copia: `docker compose build api`, `docker compose up -d --wait`, `docker compose exec -T api python -m infrastructure.seeders.run` (dos veces), `docker compose restart api` y `python tests_manual/verificar_postgres.py`. Este último script se lanzó desde el equipo con el entorno Python 3.12 existente, apuntando al PostgreSQL temporal; su propia API de prueba es Uvicorn local. Las comprobaciones de seeders, listado y reinicio anteriores sí se realizaron contra la API del contenedor.
+
+El primer intento del verificador de revisión conservó el puerto temporal anterior al reinicio y no pudo confirmar la respuesta. Se corrigió la lectura del puerto asignado por Docker y se repitió todo el procedimiento con éxito; no fue necesario cambiar código del proyecto.
+
+Al terminar se eliminaron únicamente los contenedores y el volumen del proyecto temporal de revisión. La base normal se conservó. No se recomienda eliminar su volumen para repetir pruebas.
