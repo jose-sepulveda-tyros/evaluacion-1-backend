@@ -17,10 +17,10 @@ Todos deben comprender y poder explicar el funcionamiento completo. Las responsa
 
 ## Instalación y ejecución
 
-Requiere Python 3.10 o superior. El entorno local de desarrollo se verificó con Python 3.12. Desde la carpeta raíz del proyecto:
+Usa Python 3.12, la versión verificada en desarrollo y utilizada por la imagen Docker. Las dependencias actuales no son compatibles con Python 3.10. Desde la carpeta raíz del proyecto, en macOS o Linux:
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 cp .env.example .env
@@ -32,7 +32,7 @@ uvicorn app.main:app --reload
 
 La continuación incorpora PostgreSQL. Para preparar la configuración local, copia `.env.example` como `.env` y cambia `DB_PASSWORD`. Puedes iniciar PostgreSQL con `docker compose up -d postgres` o usar una instalación local configurada con las mismas variables `DB_*`. No subas el archivo `.env` al repositorio.
 
-Si `python3` apunta a una versión anterior a 3.10, usa `python3.12 -m venv .venv`. En Windows, la activación en PowerShell es `.venv\Scripts\Activate.ps1`.
+Comprueba la versión con `python3.12 --version`. En Windows, crea el entorno con `py -3.12 -m venv .venv` y actívalo en PowerShell con `.venv\Scripts\Activate.ps1`; para copiar la plantilla usa `Copy-Item .env.example .env`. Si prefieres ejecutar todo con Docker, sigue [docker.md](docker.md), sin instalar Python localmente.
 
 - [Swagger UI](http://127.0.0.1:8000/docs): permite consultar los modelos y ejecutar solicitudes con **Try it out**.
 - [OpenAPI JSON](http://127.0.0.1:8000/openapi.json): contrato generado por FastAPI.
