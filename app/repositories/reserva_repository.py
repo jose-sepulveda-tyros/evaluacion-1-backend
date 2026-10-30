@@ -2,7 +2,7 @@
 
 from itertools import count
 
-from app.schemas.reserva import ReservaActualizar, ReservaCrear, ReservaRespuesta
+from presentation.schemas.dtos.reserva import ReservaActualizar, ReservaCrear, ReservaRespuesta
 
 _reservas: dict[int, ReservaRespuesta] = {}
 _ids = count(1)

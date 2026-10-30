@@ -1,7 +1,7 @@
 """Casos de uso de reservas y reglas de negocio."""
 
 from app.repositories import estudiante_repository, reserva_repository, sala_repository
-from app.schemas.reserva import (
+from presentation.schemas.dtos.reserva import (
     ReservaActualizar,
     ReservaConsulta,
     ReservaCrear,

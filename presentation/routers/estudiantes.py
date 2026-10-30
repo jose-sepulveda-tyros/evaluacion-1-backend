@@ -3,9 +3,9 @@ from typing import Annotated
 from fastapi import APIRouter, Path, Response, status
 
 from app import openapi_examples as doc
-from app.schemas.error import ErrorRespuesta
-from app.schemas.estudiante import EstudianteCrear, EstudianteRespuesta
-from app.services import estudiante_service
+from presentation.schemas.dtos.error import ErrorRespuesta
+from presentation.schemas.dtos.estudiante import EstudianteCrear, EstudianteRespuesta
+from application.services import estudiante_service
 
 router = APIRouter(prefix="/estudiantes", tags=["Estudiantes"])
 

@@ -60,18 +60,13 @@ Los números indican multiplicidad: `1` significa exactamente uno y `0..*` signi
 
 ## Correspondencia con el código
 
-Los nombres del diagrama describen las entidades del problema. En esta implementación, sus registros se representan mediante modelos Pydantic de respuesta y se almacenan en diccionarios. No existen clases separadas llamadas `Sala`, `Estudiante`, `Reserva` o `IncidenciaSala` dentro de `app/domain/`.
+Las entidades independientes ya existen como dataclasses en `domain/`: `Sala`, `Estudiante`, `Reserva` e `IncidenciaSala`. No dependen de Pydantic ni de SQLAlchemy. Los DTO están en `presentation/schemas/dtos/`; los modelos de tablas están en `infrastructure/models/` y los mappers en `infrastructure/mappers/`.
 
-| Entidad | Modelo de registro | Archivo del modelo | Repositorio |
-|---|---|---|---|
-| Sala | `SalaRespuesta` | [sala.py](../app/schemas/sala.py) | [sala_repository.py](../app/repositories/sala_repository.py) |
-| Estudiante | `EstudianteRespuesta` | [estudiante.py](../app/schemas/estudiante.py) | [estudiante_repository.py](../app/repositories/estudiante_repository.py) |
-| Reserva | `ReservaRespuesta` | [reserva.py](../app/schemas/reserva.py) | [reserva_repository.py](../app/repositories/reserva_repository.py) |
-| IncidenciaSala | `IncidenciaSalaRespuesta` | [incidencia_sala.py](../app/schemas/incidencia_sala.py) | [incidencia_repository.py](../app/repositories/incidencia_repository.py) |
+En este bloque, las entidades de dominio y los modelos ORM todavía no están conectados a los servicios activos. La API sigue almacenando modelos Pydantic de respuesta en los diccionarios de `app/repositories/`. Las reglas permanecen en `application/services/`; la conexión con repositorios SQL se hará en el siguiente bloque.
 
-Los DTO de creación no reciben el ID: lo genera el repositorio. Los DTO de actualización describen los campos editables. En particular, `IncidenciaSalaActualizar` solo permite cambiar `resuelto`, conservando los demás atributos.
+Los DTO de creación no reciben el ID. En las entidades de dominio, `id=None` representa un registro nuevo, antes de persistir. `IncidenciaSalaActualizar` sigue permitiendo cambiar únicamente `resuelto`.
 
-Los IDs relacionados son referencias entre registros en memoria; no son claves foráneas de una base de datos. Los servicios comprueban que la sala y el estudiante existan antes de crear o actualizar una reserva, y que la sala exista al registrar una incidencia. Al reiniciar la aplicación se pierden los registros.
+Las relaciones de las nuevas tablas están documentadas en [modelo-datos.md](modelo-datos.md). En la API activa todavía son referencias entre registros en memoria, verificadas por los servicios.
 
 ## Reglas vinculadas al modelo
 

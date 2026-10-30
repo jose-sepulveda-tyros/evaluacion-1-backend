@@ -10,6 +10,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY application ./application
+COPY domain ./domain
+COPY migrations ./migrations
+COPY alembic.ini ./alembic.ini
 COPY infrastructure ./infrastructure
 COPY presentation ./presentation
 

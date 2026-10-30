@@ -1,6 +1,6 @@
 from itertools import count
 
-from app.schemas.incidencia_sala import (
+from presentation.schemas.dtos.incidencia_sala import (
     IncidenciaSalaActualizar,
     IncidenciaSalaCrear,
     IncidenciaSalaRespuesta,

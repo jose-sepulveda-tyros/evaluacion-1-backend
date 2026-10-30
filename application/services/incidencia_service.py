@@ -1,12 +1,12 @@
 """Registro y seguimiento de incidencias de salas."""
 
 from app.repositories import incidencia_repository
-from app.schemas.incidencia_sala import (
+from presentation.schemas.dtos.incidencia_sala import (
     IncidenciaSalaActualizar,
     IncidenciaSalaCrear,
     IncidenciaSalaRespuesta,
 )
-from app.services.sala_service import obtener_sala
+from application.services.sala_service import obtener_sala
 
 
 class IncidenciaNoEncontradaError(LookupError):

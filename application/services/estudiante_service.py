@@ -1,7 +1,7 @@
 """Casos de uso de estudiantes sobre el repositorio en memoria del rol 2."""
 
 from app.repositories import estudiante_repository
-from app.schemas.estudiante import EstudianteCrear, EstudianteRespuesta
+from presentation.schemas.dtos.estudiante import EstudianteCrear, EstudianteRespuesta
 
 
 class EstudianteNoEncontradoError(LookupError):

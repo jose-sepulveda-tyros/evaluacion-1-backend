@@ -1,6 +1,6 @@
 from itertools import count
 
-from app.schemas.estudiante import EstudianteActualizar, EstudianteCrear, EstudianteRespuesta
+from presentation.schemas.dtos.estudiante import EstudianteActualizar, EstudianteCrear, EstudianteRespuesta
 
 _estudiantes: dict[int, EstudianteRespuesta] = {}
 _ids = count(1)

@@ -1,7 +1,7 @@
 """Casos de uso de salas y coherencia con las reservas activas."""
 
 from app.repositories import reserva_repository, sala_repository
-from app.schemas.sala import SalaActualizar, SalaCrear, SalaRespuesta
+from presentation.schemas.dtos.sala import SalaActualizar, SalaCrear, SalaRespuesta
 
 
 class SalaNoEncontradaError(LookupError):

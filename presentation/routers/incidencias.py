@@ -3,13 +3,13 @@ from typing import Annotated
 from fastapi import APIRouter, Path, status
 
 from app import openapi_examples as doc
-from app.schemas.error import ErrorRespuesta
-from app.schemas.incidencia_sala import (
+from presentation.schemas.dtos.error import ErrorRespuesta
+from presentation.schemas.dtos.incidencia_sala import (
     IncidenciaSalaActualizar,
     IncidenciaSalaCrear,
     IncidenciaSalaRespuesta,
 )
-from app.services import incidencia_service
+from application.services import incidencia_service
 
 router = APIRouter(prefix="/incidencias", tags=["Incidencias"])
 

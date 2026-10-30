@@ -1,6 +1,6 @@
 from itertools import count
 
-from app.schemas.sala import SalaActualizar, SalaCrear, SalaRespuesta
+from presentation.schemas.dtos.sala import SalaActualizar, SalaCrear, SalaRespuesta
 
 _salas: dict[int, SalaRespuesta] = {}
 _ids = count(1)

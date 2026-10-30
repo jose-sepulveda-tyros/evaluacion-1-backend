@@ -3,15 +3,15 @@ from typing import Annotated
 from fastapi import APIRouter, Path, Query, Response, status
 
 from app import openapi_examples as doc
-from app.schemas.error import ErrorRespuesta
-from app.schemas.reserva import (
+from presentation.schemas.dtos.error import ErrorRespuesta
+from presentation.schemas.dtos.reserva import (
     ReservaActualizar,
     ReservaConsulta,
     ReservaCrear,
     ReservaPagina,
     ReservaRespuesta,
 )
-from app.services import reserva_service
+from application.services import reserva_service
 
 router = APIRouter(prefix="/reservas", tags=["Reservas"])
 

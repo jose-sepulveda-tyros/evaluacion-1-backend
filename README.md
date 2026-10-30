@@ -99,19 +99,46 @@ No incluye frontend, aplicación móvil, autenticación, envío de correos/notif
 
 ```text
 app/
-  main.py                 # Configura FastAPI y registra routers y manejadores.
-  errors.py               # Traduce excepciones de servicios/validación a HTTP.
-  routers/                # Entrada HTTP, DTO y respuestas.
-  schemas/                # Modelos Pydantic y validaciones de datos.
-  services/               # Casos de uso y reglas de negocio.
-  repositories/           # Diccionarios, IDs y operaciones de almacenamiento.
-  domain/                 # Paquete reservado; actualmente sin entidades separadas.
-tests_manual/
-  pruebas.http            # Colección ejecutable de solicitudes.
-  verificar_coleccion.py  # Verifica resultados por HTTP con la biblioteca estándar.
+  main.py                   # Ensambla FastAPI, routers y manejadores.
+  errors.py                 # Traduce errores de servicios/validación a HTTP.
+  openapi_examples.py       # Ejemplos del contrato OpenAPI.
+  repositories/             # Almacenamiento en memoria temporal, aún usado por la API.
+presentation/
+  routers/                  # Entrada HTTP y respuestas.
+  schemas/dtos/             # Pydantic: creación, actualización, consulta y salida.
+  dependencies.py           # Sesión SQLAlchemy; se conectará en el siguiente bloque.
+application/services/       # Casos de uso y reglas actuales.
+domain/                     # Sala, Estudiante, Reserva e IncidenciaSala independientes.
+infrastructure/
+  database.py               # Configuración PostgreSQL y sesiones.
+  models/                   # Tablas SQLAlchemy con PK, FK y relaciones.
+  mappers/                  # Conversiones entre entidades y modelos ORM.
+migrations/                 # Alembic y migración inicial 0001.
+tests/                      # Pruebas de configuración, modelos y migración.
+tests_manual/               # Colección de 63 solicitudes y verificador HTTP.
+docs/                       # Diagramas de clases y datos.
 ```
 
-Flujo: solicitud → router → schema Pydantic → servicio → repositorio → modelo de respuesta. FastAPI valida y serializa la salida. Actualmente se almacenan modelos Pydantic de respuesta en los diccionarios; no hay una segunda representación de entidades en `domain/`.
+Flujo activo: solicitud → router → DTO Pydantic → servicio → repositorio en memoria → respuesta. Los servicios conservan temporalmente los DTO y repositorios actuales; las nuevas entidades, modelos y mappers se integrarán al conectar los repositorios SQL. La API todavía pierde sus datos al reiniciar.
+
+### Preparar las tablas PostgreSQL
+
+Con PostgreSQL en ejecución y una base vacía creada, configura `.env` a partir de `.env.example`. Si usas Docker Compose, `docker compose up -d postgres` prepara el servicio y la base configurada. Desde la raíz, con el entorno virtual activado:
+
+```bash
+python -m alembic upgrade head
+python -m alembic current
+```
+
+La migración `0001` crea las cuatro tablas; no carga datos y no cambia aún el almacenamiento usado por los endpoints. Las tablas no se crean al iniciar FastAPI. El [diagrama de datos](docs/modelo-datos.md) explica sus columnas, claves y relaciones.
+
+Para comprobar el código sin conectarse a PostgreSQL:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Las pruebas de modelos y migración usan SQLite temporal únicamente para verificar conversiones, referencias y creación/reversión del esquema. No acreditan la ejecución en PostgreSQL. Se puede revisar el SQL PostgreSQL sin conexión con `python -m alembic upgrade head --sql`. La comprobación real de migraciones en PostgreSQL está pendiente.
 
 ## Reglas y validaciones
 
