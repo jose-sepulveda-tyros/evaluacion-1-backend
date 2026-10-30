@@ -1,6 +1,7 @@
 """Convierte los errores de servicios y validación al contrato HTTP del proyecto."""
 
 from fastapi import FastAPI, Request
+from domain.errors import ConflictoPersistenciaError
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -21,6 +22,11 @@ from application.services.sala_service import CapacidadEnConflictoError, SalaNoE
 
 
 def registrar_manejadores(app: FastAPI) -> None:
+    @app.exception_handler(ConflictoPersistenciaError)
+    async def conflicto_persistencia(request: Request, exc: ConflictoPersistenciaError) -> JSONResponse:
+        respuesta = ErrorRespuesta(error=ErrorDetalle(code="PERSISTENCE_CONFLICT", message=str(exc)))
+        return JSONResponse(status_code=409, content=respuesta.model_dump(mode="json"))
+
     @app.exception_handler(ReservaNoEncontradaError)
     async def reserva_no_encontrada(
         request: Request, exc: ReservaNoEncontradaError

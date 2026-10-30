@@ -1,6 +1,6 @@
 # Sistema de Reservas de Salas de Estudio
 
-Proyecto grupal de Desarrollo de Backend (ICINF1108). API REST para registrar salas, estudiantes, reservas e incidencias del campus. Usa Python, FastAPI, Pydantic y Uvicorn, con almacenamiento exclusivamente en memoria mediante diccionarios.
+Proyecto grupal de Desarrollo de Backend (ICINF1108). API REST para registrar salas, estudiantes, reservas e incidencias del campus. Usa Python, FastAPI, Pydantic y Uvicorn, con almacenamiento en PostgreSQL mediante SQLAlchemy y migraciones Alembic.
 
 ## Equipo y responsabilidades
 
@@ -9,7 +9,7 @@ El líder del grupo es **José Sepúlveda**, quien también asume el rol de API 
 | Integrante | Rol | Cuenta de GitHub | Responsabilidad principal |
 |---|---|---|---|
 | Lissete Delgado | 1. Coordinación y documentación | `aloliss-17` | Planificación, README, P1–P7, revisión de Swagger, coordinación de integración y presentación. |
-| Benjamín Leal | 2. Dominio y datos | `benjamin-leal` | Entidades, atributos, relaciones, schemas/DTO, validaciones y repositorios en memoria. |
+| Benjamín Leal | 2. Dominio y datos | `benjamin-leal` | Entidades, atributos, relaciones, schemas/DTO, validaciones, modelos persistentes, migraciones y seeders. |
 | José Sepúlveda | 3. API y lógica de negocio; líder del grupo | `jose-sepulveda-tyros` | Liderazgo del grupo, endpoints, servicios, CRUD, reglas de negocio y manejo de errores. |
 | Elías Gutiérrez | 4. Calidad y pruebas | `rosbosman` | Casos exitosos y de error, colección de pruebas y revisión de filtros, ordenamiento y paginación. |
 
@@ -23,6 +23,10 @@ Requiere Python 3.10 o superior. El entorno local de desarrollo se verificó con
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+cp .env.example .env
+# Edita .env con la configuración local antes de continuar.
+docker compose up -d postgres
+python -m alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
@@ -34,7 +38,7 @@ Si `python3` apunta a una versión anterior a 3.10, usa `python3.12 -m venv .ven
 - [OpenAPI JSON](http://127.0.0.1:8000/openapi.json): contrato generado por FastAPI.
 - `requirements.txt` fija FastAPI, Uvicorn y `email-validator`; Pydantic se instala como dependencia de FastAPI.
 
-La aplicación inicia sin datos. Primero registra una sala y un estudiante y usa sus IDs al crear una reserva. Cada reinicio, incluido el provocado por `--reload`, borra los registros y reinicia los contadores. Ejecuta una sola instancia/proceso: los diccionarios no se comparten entre procesos.
+En una base nueva, primero registra una sala y un estudiante y usa sus IDs al crear una reserva. Los registros y sus IDs se conservan al reiniciar Uvicorn. Los seeders todavía están pendientes. El volumen de Docker conserva PostgreSQL al detener el contenedor; no elimines ese volumen si necesitas conservar sus datos.
 
 ## Problemática y alcance: P1–P7
 
@@ -82,7 +86,7 @@ Consulta el [diagrama de clases y relaciones del dominio](docs/modelo-dominio.md
 
 ### P6. Fuera de alcance
 
-No incluye frontend, aplicación móvil, autenticación, envío de correos/notificaciones, base de datos ni despliegue en Internet. Los datos no persisten después de detener el servidor.
+No incluye frontend, aplicación móvil, autenticación, envío de correos/notificaciones ni despliegue en Internet. La continuación sí incluye persistencia en PostgreSQL.
 
 ### P7. Criterios de aceptación
 
@@ -102,24 +106,30 @@ app/
   main.py                   # Ensambla FastAPI, routers y manejadores.
   errors.py                 # Traduce errores de servicios/validación a HTTP.
   openapi_examples.py       # Ejemplos del contrato OpenAPI.
-  repositories/             # Almacenamiento en memoria temporal, aún usado por la API.
 presentation/
   routers/                  # Entrada HTTP y respuestas.
   schemas/dtos/             # Pydantic: creación, actualización, consulta y salida.
-  dependencies.py           # Sesión SQLAlchemy; se conectará en el siguiente bloque.
+  dependencies.py           # Sesión e inyección de servicios por solicitud.
 application/services/       # Casos de uso y reglas actuales.
 domain/                     # Sala, Estudiante, Reserva e IncidenciaSala independientes.
 infrastructure/
   database.py               # Configuración PostgreSQL y sesiones.
   models/                   # Tablas SQLAlchemy con PK, FK y relaciones.
   mappers/                  # Conversiones entre entidades y modelos ORM.
+  repositories/             # CRUD SQL, commit y rollback.
 migrations/                 # Alembic y migración inicial 0001.
 tests/                      # Pruebas de configuración, modelos y migración.
 tests_manual/               # Colección de 63 solicitudes y verificador HTTP.
 docs/                       # Diagramas de clases y datos.
 ```
 
-Flujo activo: solicitud → router → DTO Pydantic → servicio → repositorio en memoria → respuesta. Los servicios conservan temporalmente los DTO y repositorios actuales; las nuevas entidades, modelos y mappers se integrarán al conectar los repositorios SQL. La API todavía pierde sus datos al reiniciar.
+Flujo activo: solicitud → router + DTO Pydantic → entidad de dominio → servicio → repositorio + mapper → modelo ORM → PostgreSQL. La respuesta pasa por el modelo Pydantic de salida. Los servicios no importan Pydantic ni SQLAlchemy; reciben repositorios y trabajan con entidades.
+
+Cada solicitud recibe una sesión. Las escrituras confirman la transacción; ante errores se hace rollback y la sesión siempre se cierra. Los conflictos de integridad se devuelven como HTTP 409 con código `PERSISTENCE_CONFLICT`, sin exponer mensajes internos de SQL.
+
+Para evitar que dos solicitudes validen simultáneamente el mismo horario o cupo, los cambios de reservas y capacidad usan un bloqueo transaccional compartido de PostgreSQL (`pg_advisory_xact_lock`). Se adquiere antes de leer las reglas y se libera al confirmar o revertir. Esta solución serializa esas escrituras, apropiada para el alcance académico; no está pensada para un sistema de gran volumen.
+
+El listado de reservas consulta datos persistidos, pero todavía filtra, ordena y pagina en el servicio. Trasladar esas operaciones a SQL será el siguiente bloque.
 
 ### Preparar las tablas PostgreSQL
 
@@ -130,7 +140,7 @@ python -m alembic upgrade head
 python -m alembic current
 ```
 
-La migración `0001` crea las cuatro tablas; no carga datos y no cambia aún el almacenamiento usado por los endpoints. Las tablas no se crean al iniciar FastAPI. El [diagrama de datos](docs/modelo-datos.md) explica sus columnas, claves y relaciones.
+La migración `0001` crea las cuatro tablas usadas por los endpoints; no carga datos. Las tablas no se crean al iniciar FastAPI. El [diagrama de datos](docs/modelo-datos.md) explica sus columnas, claves y relaciones.
 
 Para comprobar el código sin conectarse a PostgreSQL:
 
@@ -138,7 +148,7 @@ Para comprobar el código sin conectarse a PostgreSQL:
 python -m unittest discover -s tests -v
 ```
 
-Las pruebas de modelos y migración usan SQLite temporal únicamente para verificar conversiones, referencias y creación/reversión del esquema. No acreditan la ejecución en PostgreSQL. Se puede revisar el SQL PostgreSQL sin conexión con `python -m alembic upgrade head --sql`. La comprobación real de migraciones en PostgreSQL está pendiente.
+Las pruebas de modelos y migración usan SQLite temporal únicamente para verificar conversiones, referencias y creación/reversión del esquema. No acreditan la ejecución en PostgreSQL. Se puede revisar el SQL PostgreSQL sin conexión con `python -m alembic upgrade head --sql`. La comprobación real de migraciones, CRUD, reinicio y solicitudes simultáneas se puede repetir con el script indicado abajo.
 
 ## Reglas y validaciones
 
@@ -235,7 +245,7 @@ Las rutas o métodos no implementados conservan los errores predeterminados de F
 
 La colección [tests_manual/pruebas.http](tests_manual/pruebas.http) amplía el archivo inicial del rol 4. Contiene 63 casos con resultados esperados, cobertura de los 15 endpoints, reglas de negocio, validaciones y paginación con varios registros.
 
-1. Inicia Uvicorn sobre una instancia vacía con el comando de ejecución anterior.
+1. Para la colección manual, inicia Uvicorn conectado a una base de pruebas recién creada y migrada, sin registros y con secuencias nuevas. No uses una base con datos que quieras conservar.
 2. En otra terminal, desde la raíz del proyecto y con `.venv` activado, ejecuta:
 
 ```bash
@@ -250,6 +260,18 @@ python tests_manual/verificar_coleccion.py --base-url http://127.0.0.1:8001
 
 El verificador comprueba códigos HTTP, campos esperados, headers declarados, errores uniformes, cuerpo vacío en 204 y cobertura de las operaciones publicadas en OpenAPI. Se detiene en el primer fallo con código de salida 1. Las primeras cuatro consultas exigen una API sin datos; no borra datos para preparar el entorno.
 
-Para repetir, detén y vuelve a iniciar Uvicorn. No ejecutes solicitudes manuales entre los casos ni edites archivos mientras corre la colección con `--reload`. Los IDs de ejemplo dependen de ejecutar la secuencia completa sobre memoria vacía.
+Reiniciar Uvicorn ya no vacía los datos. Para repetir sin borrar tu base normal, usa `python tests_manual/verificar_postgres.py`. No ejecutes solicitudes manuales entre los casos de la colección. Los IDs de ejemplo dependen de una base nueva y de ejecutar la secuencia completa.
 
 También puede ejecutarse manualmente en VS Code con la extensión REST Client, usando **Send Request** en cada bloque de `pruebas.http`, de arriba hacia abajo. Las líneas `# expect` indican qué respuesta revisar; solo el verificador Python las comprueba automáticamente.
+
+### Verificación aislada con PostgreSQL
+
+Con el servicio PostgreSQL disponible y `.env` configurado:
+
+```bash
+python tests_manual/verificar_postgres.py
+```
+
+El script requiere que el usuario PostgreSQL pueda crear bases (el usuario inicial de Docker tiene ese permiso). Crea una base temporal con nombre aleatorio terminado en `_test`, migra, revierte y vuelve a migrar, ejecuta los 63 casos sobre un Uvicorn temporal, reinicia ese servidor y comprueba los datos. También comprueba dos reservas simultáneas: una debe responder 201 y la otra 409. Al terminar elimina exclusivamente la base temporal que acaba de crear, nunca la base normal del `.env`. No requiere que detengas tu API habitual.
+
+Resultados del bloque actual: [evidencia de persistencia](tests_manual/evidencia-postgresql.md).

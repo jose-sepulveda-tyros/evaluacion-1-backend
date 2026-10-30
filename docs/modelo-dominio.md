@@ -62,11 +62,11 @@ Los números indican multiplicidad: `1` significa exactamente uno y `0..*` signi
 
 Las entidades independientes ya existen como dataclasses en `domain/`: `Sala`, `Estudiante`, `Reserva` e `IncidenciaSala`. No dependen de Pydantic ni de SQLAlchemy. Los DTO están en `presentation/schemas/dtos/`; los modelos de tablas están en `infrastructure/models/` y los mappers en `infrastructure/mappers/`.
 
-En este bloque, las entidades de dominio y los modelos ORM todavía no están conectados a los servicios activos. La API sigue almacenando modelos Pydantic de respuesta en los diccionarios de `app/repositories/`. Las reglas permanecen en `application/services/`; la conexión con repositorios SQL se hará en el siguiente bloque.
+Los servicios en `application/services/` reciben entidades de dominio y repositorios SQL. Los routers convierten los DTO de entrada a entidades; los modelos Pydantic de respuesta validan la salida. Los repositorios de `infrastructure/repositories/` usan mappers para guardar y recuperar las entidades mediante SQLAlchemy.
 
 Los DTO de creación no reciben el ID. En las entidades de dominio, `id=None` representa un registro nuevo, antes de persistir. `IncidenciaSalaActualizar` sigue permitiendo cambiar únicamente `resuelto`.
 
-Las relaciones de las nuevas tablas están documentadas en [modelo-datos.md](modelo-datos.md). En la API activa todavía son referencias entre registros en memoria, verificadas por los servicios.
+Las relaciones de las nuevas tablas están documentadas en [modelo-datos.md](modelo-datos.md). La API utiliza estas claves foráneas en PostgreSQL; los servicios también comprueban los recursos relacionados antes de escribir.
 
 ## Reglas vinculadas al modelo
 

@@ -1,6 +1,6 @@
 # Modelo de datos PostgreSQL
 
-Este esquema corresponde a los modelos de `infrastructure/models/` y a la migración `migrations/versions/0001_crear_tablas.py`. Los endpoints aún usan repositorios en memoria; este bloque prepara las tablas para su conexión posterior.
+Este esquema corresponde a los modelos de `infrastructure/models/` y a la migración `migrations/versions/0001_crear_tablas.py`. Los endpoints usan estas tablas mediante repositorios SQLAlchemy y sesiones por solicitud.
 
 ```mermaid
 erDiagram
@@ -54,4 +54,4 @@ Ejecuta `python -m alembic upgrade head` para crear las tablas. El comando usa l
 
 En una base desechable de pruebas, `python -m alembic downgrade base` revierte la migración y elimina las cuatro tablas y sus datos. No ejecutar sobre una base con datos que quieras conservar. Después puede repetirse `upgrade head`.
 
-Pendiente: verificar el ciclo completo en PostgreSQL, conectar repositorios SQL y añadir seeders. Los tests locales del esquema con SQLite no reemplazan esa comprobación.
+El ciclo completo se verificó en PostgreSQL mediante `tests_manual/verificar_postgres.py`: migraciones, 63 casos de API, persistencia tras reiniciar y dos reservas simultáneas. Pendiente: seeders y trasladar filtros/orden/paginación al repositorio SQL.

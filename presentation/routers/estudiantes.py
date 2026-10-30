@@ -5,7 +5,12 @@ from fastapi import APIRouter, Path, Response, status
 from app import openapi_examples as doc
 from presentation.schemas.dtos.error import ErrorRespuesta
 from presentation.schemas.dtos.estudiante import EstudianteCrear, EstudianteRespuesta
-from application.services import estudiante_service
+from application.services.estudiante_service import EstudianteService
+from presentation.dependencies import get_estudiante_service
+from fastapi import Depends
+from domain.estudiante import Estudiante
+
+ServiceDep = Annotated[EstudianteService, Depends(get_estudiante_service)]
 
 router = APIRouter(prefix="/estudiantes", tags=["Estudiantes"])
 
@@ -15,7 +20,7 @@ router = APIRouter(prefix="/estudiantes", tags=["Estudiantes"])
     response_model=EstudianteRespuesta,
     status_code=status.HTTP_201_CREATED,
     summary="Crear un estudiante",
-    responses={422: {"model": ErrorRespuesta, "description": "Datos del estudiante inválidos"}},
+    responses={409: {"model": ErrorRespuesta, "description": "Conflicto con recursos relacionados"}, 422: {"model": ErrorRespuesta, "description": "Datos del estudiante inválidos"}},
     openapi_extra=doc.ejemplos(
         entrada=doc.ESTUDIANTE,
         codigo=201,
@@ -25,9 +30,9 @@ router = APIRouter(prefix="/estudiantes", tags=["Estudiantes"])
         },
     ),
 )
-async def crear_estudiante(datos: EstudianteCrear, response: Response) -> EstudianteRespuesta:
-    """Registra nombre, carrera, correo y estado activo en memoria; genera un ID."""
-    estudiante = estudiante_service.crear_estudiante(datos)
+def crear_estudiante(service: ServiceDep, datos: EstudianteCrear, response: Response) -> Estudiante:
+    """Registra nombre, carrera, correo y estado activo en la base de datos; genera un ID."""
+    estudiante = service.crear_estudiante(Estudiante(id=None, **datos.model_dump()))
     response.headers["Location"] = f"/estudiantes/{estudiante.id}"
     return estudiante
 
@@ -40,9 +45,9 @@ async def crear_estudiante(datos: EstudianteCrear, response: Response) -> Estudi
         salida=[doc.ESTUDIANTE_RESPUESTA],
     ),
 )
-async def listar_estudiantes() -> list[EstudianteRespuesta]:
+def listar_estudiantes(service: ServiceDep) -> list[Estudiante]:
     """Devuelve todos los estudiantes registrados, incluidos los inactivos."""
-    return estudiante_service.listar_estudiantes()
+    return service.listar_estudiantes()
 
 
 @router.get(
@@ -61,8 +66,9 @@ async def listar_estudiantes() -> list[EstudianteRespuesta]:
         },
     ),
 )
-async def obtener_estudiante(
+def obtener_estudiante(
+    service: ServiceDep,
     estudiante_id: Annotated[int, Path(gt=0, description="Identificador del estudiante")],
-) -> EstudianteRespuesta:
+) -> Estudiante:
     """Consulta un estudiante por su identificador; devuelve 404 si no existe."""
-    return estudiante_service.obtener_estudiante(estudiante_id)
+    return service.obtener_estudiante(estudiante_id)

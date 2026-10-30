@@ -11,7 +11,13 @@ from presentation.schemas.dtos.reserva import (
     ReservaPagina,
     ReservaRespuesta,
 )
-from application.services import reserva_service
+from application.services.reserva_service import ReservaService
+from presentation.dependencies import get_reserva_service
+from fastapi import Depends
+from domain.reserva import Reserva
+from domain.consulta_reservas import ConsultaReservas, PaginaReservas
+
+ServiceDep = Annotated[ReservaService, Depends(get_reserva_service)]
 
 router = APIRouter(prefix="/reservas", tags=["Reservas"])
 
@@ -39,12 +45,12 @@ router = APIRouter(prefix="/reservas", tags=["Reservas"])
         },
     ),
 )
-async def crear_reserva(datos: ReservaCrear, response: Response) -> ReservaRespuesta:
+def crear_reserva(service: ServiceDep, datos: ReservaCrear, response: Response) -> Reserva:
     """Crea una reserva para una sala y un estudiante existentes.
 
     Valida capacidad, horarios, superposiciones y el límite diario de activas.
     """
-    reserva = reserva_service.crear_reserva(datos)
+    reserva = service.crear_reserva(Reserva(id=None, **datos.model_dump()))
     response.headers["Location"] = f"/reservas/{reserva.id}"
     return reserva
 
@@ -61,7 +67,7 @@ async def crear_reserva(datos: ReservaCrear, response: Response) -> ReservaRespu
         },
     ),
 )
-async def listar_reservas(consulta: Annotated[ReservaConsulta, Query()]) -> ReservaPagina:
+def listar_reservas(service: ServiceDep, consulta: Annotated[ReservaConsulta, Query()]) -> PaginaReservas:
     """Filtra por fecha, sala, estudiante y estado; luego ordena y finalmente pagina.
 
     Los filtros se combinan. Por defecto ordena por ID ascendente y devuelve
@@ -69,7 +75,7 @@ async def listar_reservas(consulta: Annotated[ReservaConsulta, Query()]) -> Rese
     Una página fuera de rango devuelve items vacío conservando los metadatos.
     Ejemplo: /reservas?sala_id=2&estado=activa&ordenar_por=fecha&direccion=asc&pagina=1&limite=10
     """
-    return reserva_service.listar_reservas(consulta)
+    return service.listar_reservas(ConsultaReservas(**consulta.model_dump()))
 
 
 @router.get(
@@ -88,11 +94,12 @@ async def listar_reservas(consulta: Annotated[ReservaConsulta, Query()]) -> Rese
         },
     ),
 )
-async def obtener_reserva(
+def obtener_reserva(
+    service: ServiceDep,
     reserva_id: Annotated[int, Path(gt=0, description="Identificador de la reserva")],
-) -> ReservaRespuesta:
+) -> Reserva:
     """Busca una reserva por su identificador; devuelve 404 si no existe."""
-    return reserva_service.obtener_reserva(reserva_id)
+    return service.obtener_reserva(reserva_id)
 
 
 @router.put(
@@ -116,12 +123,13 @@ async def obtener_reserva(
         },
     ),
 )
-async def actualizar_reserva(
+def actualizar_reserva(
+    service: ServiceDep,
     reserva_id: Annotated[int, Path(gt=0, description="Identificador de la reserva")],
     datos: ReservaActualizar,
-) -> ReservaRespuesta:
+) -> Reserva:
     """Reemplaza los campos y conserva el ID, aplicando las mismas reglas de creación."""
-    return reserva_service.actualizar_reserva(reserva_id, datos)
+    return service.actualizar_reserva(reserva_id, Reserva(id=reserva_id, **datos.model_dump()))
 
 
 @router.delete(
@@ -129,7 +137,7 @@ async def actualizar_reserva(
     status_code=status.HTTP_204_NO_CONTENT,
     response_class=Response,
     summary="Eliminar una reserva",
-    responses={
+    responses={409: {"model": ErrorRespuesta, "description": "Conflicto con recursos relacionados"},
         404: {"model": ErrorRespuesta, "description": "La reserva no existe"},
         422: {"model": ErrorRespuesta, "description": "ID inválido"},
     },
@@ -141,9 +149,10 @@ async def actualizar_reserva(
         },
     ),
 )
-async def eliminar_reserva(
+def eliminar_reserva(
+    service: ServiceDep,
     reserva_id: Annotated[int, Path(gt=0, description="Identificador de la reserva")],
 ) -> Response:
-    """Elimina una reserva de la memoria; devuelve 204 sin cuerpo o 404 si no existe."""
-    reserva_service.eliminar_reserva(reserva_id)
+    """Elimina una reserva de la base de datos; devuelve 204 sin cuerpo o 404 si no existe."""
+    service.eliminar_reserva(reserva_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
