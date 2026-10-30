@@ -26,3 +26,13 @@ Se verificaron los seeders de Benjamín con el ajuste de carga global sobre una 
 - Suite local: 13 pruebas aprobadas, incluidas cinco de seeders (carga, repetición, bases parciales y rollback).
 
 Los casos locales pueden repetirse con `python -m unittest tests.test_seeders -v`. El script `verificar_postgres.py` anterior prueba la API y persistencia; no incluye estos escenarios de seeders.
+
+## Filtros, ordenamiento y paginación SQL - 30 de octubre de 2026
+
+Tras trasladar las consultas al repositorio SQL:
+
+- `python -m unittest discover -s tests -v`: 19 pruebas correctas.
+- Seis pruebas nuevas comprueban filtros combinados, total filtrado anterior al límite, orden ascendente/descendente, desempate por ID, páginas fuera de rango y ausencia de coincidencias. También verifican que la consulta de filas incluya WHERE, ORDER BY, LIMIT y OFFSET, y que el conteo no tenga LIMIT.
+- `python tests_manual/verificar_postgres.py`: 63 casos correctos, 15 operaciones cubiertas; también pasan migraciones, persistencia tras reiniciar y rechazo de reservas simultáneas superpuestas.
+
+No cambian los parámetros de la API ni la estructura de las respuestas. Las pruebas PostgreSQL usan una base temporal y no modifican los datos de la base normal.

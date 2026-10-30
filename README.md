@@ -130,7 +130,7 @@ Cada solicitud recibe una sesión. Las escrituras confirman la transacción; ant
 
 Para evitar que dos solicitudes validen simultáneamente el mismo horario o cupo, los cambios de reservas y capacidad usan un bloqueo transaccional compartido de PostgreSQL (`pg_advisory_xact_lock`). Se adquiere antes de leer las reglas y se libera al confirmar o revertir. Esta solución serializa esas escrituras, apropiada para el alcance académico; no está pensada para un sistema de gran volumen.
 
-El listado de reservas consulta datos persistidos, pero todavía filtra, ordena y pagina en el servicio. Trasladar esas operaciones a SQL será el siguiente bloque.
+El listado de reservas delega al repositorio los filtros (`WHERE`), el orden (`ORDER BY`) y la paginación (`OFFSET`/`LIMIT`). SQLAlchemy envía estas operaciones a PostgreSQL y solo devuelve los registros de la página solicitada. Una consulta `COUNT` con los mismos filtros obtiene el total sin aplicar el límite; el servicio calcula `total_paginas` y arma la respuesta. Pydantic sigue validando los parámetros de entrada.
 
 ### Preparar las tablas PostgreSQL
 

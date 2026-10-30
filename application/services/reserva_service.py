@@ -97,21 +97,9 @@ class ReservaService:
         return self.reserva_repository.crear(datos)
 
     def listar_reservas(self, consulta: ConsultaReservas) -> PaginaReservas:
-        reservas = self.reserva_repository.listar()
-        for campo in ("fecha", "sala_id", "estudiante_id", "estado"):
-            valor = getattr(consulta, campo)
-            if valor is not None:
-                reservas = [reserva for reserva in reservas if getattr(reserva, campo) == valor]
-
-        # El ID desempata para mantener un orden determinista entre páginas.
-        reservas.sort(
-            key=lambda reserva: (getattr(reserva, consulta.ordenar_por), reserva.id),
-            reverse=consulta.direccion == "desc",
-        )
-        total = len(reservas)
-        inicio = (consulta.pagina - 1) * consulta.limite
+        reservas, total = self.reserva_repository.consultar(consulta)
         return PaginaReservas(
-            items=reservas[inicio:inicio + consulta.limite],
+            items=reservas,
             total=total,
             pagina=consulta.pagina,
             limite=consulta.limite,
