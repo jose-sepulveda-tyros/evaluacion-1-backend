@@ -9,9 +9,11 @@ from .seed import sembrar
 def main() -> None:
     with SessionLocal() as session:
         resultado = sembrar(session)
+    if not any(resultado.values()):
+        print("Carga omitida: ya existen datos en alguna tabla. No se modificó ninguna tabla.")
+        return
     for tabla, cantidad in resultado.items():
-        estado = f"{cantidad} insertadas" if cantidad else "ya tenía datos, sin cambios"
-        print(f"{tabla}: {estado}")
+        print(f"{tabla}: {cantidad} insertadas")
 
 
 if __name__ == "__main__":
