@@ -1,0 +1,1 @@
+"""Seeders: datos iniciales de demostración para PostgreSQL."""
