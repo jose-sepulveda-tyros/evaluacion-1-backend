@@ -38,7 +38,7 @@ Si `python3` apunta a una versión anterior a 3.10, usa `python3.12 -m venv .ven
 - [OpenAPI JSON](http://127.0.0.1:8000/openapi.json): contrato generado por FastAPI.
 - `requirements.txt` fija FastAPI, Uvicorn y `email-validator`; Pydantic se instala como dependencia de FastAPI.
 
-En una base nueva, primero registra una sala y un estudiante y usa sus IDs al crear una reserva. Los registros y sus IDs se conservan al reiniciar Uvicorn. Los seeders todavía están pendientes. El volumen de Docker conserva PostgreSQL al detener el contenedor; no elimines ese volumen si necesitas conservar sus datos.
+En una base nueva, primero registra una sala y un estudiante y usa sus IDs al crear una reserva. Los registros y sus IDs se conservan al reiniciar Uvicorn. La carga inicial está disponible con `python -m infrastructure.seeders.run`, después de aplicar las migraciones y antes de crear datos manualmente. El volumen de Docker conserva PostgreSQL al detener el contenedor; no elimines ese volumen si necesitas conservar sus datos.
 
 ## Problemática y alcance: P1–P7
 
@@ -117,6 +117,7 @@ infrastructure/
   models/                   # Tablas SQLAlchemy con PK, FK y relaciones.
   mappers/                  # Conversiones entre entidades y modelos ORM.
   repositories/             # CRUD SQL, commit y rollback.
+  seeders/                  # Datos iniciales; carga completa solo sobre base vacía.
 migrations/                 # Alembic y migración inicial 0001.
 tests/                      # Pruebas de configuración, modelos y migración.
 tests_manual/               # Colección de 63 solicitudes y verificador HTTP.
@@ -275,3 +276,19 @@ python tests_manual/verificar_postgres.py
 El script requiere que el usuario PostgreSQL pueda crear bases (el usuario inicial de Docker tiene ese permiso). Crea una base temporal con nombre aleatorio terminado en `_test`, migra, revierte y vuelve a migrar, ejecuta los 63 casos sobre un Uvicorn temporal, reinicia ese servidor y comprueba los datos. También comprueba dos reservas simultáneas: una debe responder 201 y la otra 409. Al terminar elimina exclusivamente la base temporal que acaba de crear, nunca la base normal del `.env`. No requiere que detengas tu API habitual.
 
 Resultados del bloque actual: [evidencia de persistencia](tests_manual/evidencia-postgresql.md).
+
+### Datos iniciales (seeders)
+
+La carga inicial fue aportada por Benjamín en la rama `2-dominio-datos` (commit `0c0c488`); se incorporó conservando sus datos y ajustando la protección ante bases parcialmente pobladas.
+
+Después de aplicar las migraciones, antes de iniciar la API:
+
+```bash
+python -m infrastructure.seeders.run
+```
+
+Con la API construida en Docker también puede ejecutarse `docker compose exec api python -m infrastructure.seeders.run`. La imagen debe incluir estos archivos; reconstruirla si fue creada antes de incorporarlos.
+
+El comando carga 3 salas, 3 estudiantes, 5 reservas y 2 incidencias, con relaciones y horarios coherentes. Solo escribe si las cuatro tablas están vacías. Si alguna tiene registros, omite toda la carga y lo informa, sin borrar ni completar tablas parcialmente. Ejecutarlo otra vez no duplica datos. Toda la carga ocurre en una transacción; un error revierte todos los registros de esa ejecución.
+
+Las pruebas HTTP de `pruebas.http` esperan una base vacía, por lo que no deben ejecutarse sobre la base de demostración después de sembrarla. `python tests_manual/verificar_postgres.py` prepara su propia base temporal aislada.

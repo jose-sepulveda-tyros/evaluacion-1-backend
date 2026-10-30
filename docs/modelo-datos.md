@@ -54,4 +54,4 @@ Ejecuta `python -m alembic upgrade head` para crear las tablas. El comando usa l
 
 En una base desechable de pruebas, `python -m alembic downgrade base` revierte la migración y elimina las cuatro tablas y sus datos. No ejecutar sobre una base con datos que quieras conservar. Después puede repetirse `upgrade head`.
 
-El ciclo completo se verificó en PostgreSQL mediante `tests_manual/verificar_postgres.py`: migraciones, 63 casos de API, persistencia tras reiniciar y dos reservas simultáneas. Pendiente: seeders y trasladar filtros/orden/paginación al repositorio SQL.
+El ciclo completo se verificó en PostgreSQL mediante `tests_manual/verificar_postgres.py`: migraciones, 63 casos de API, persistencia tras reiniciar y dos reservas simultáneas. Los seeders se ejecutan con `python -m infrastructure.seeders.run` y solo cargan si las cuatro tablas están vacías. Pendiente: trasladar filtros/orden/paginación al repositorio SQL.
