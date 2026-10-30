@@ -14,6 +14,33 @@ Entorno: Python 3.12, PostgreSQL 16 en Docker y una base temporal nueva, aislada
 
 La base normal del proyecto conserva sus datos. Los seeders y la paginación ejecutada directamente en SQL pertenecen a los siguientes bloques.
 
+
+## Filtros, ordenamiento y paginación SQL - 30 de octubre de 2026
+
+Tras trasladar las consultas al repositorio SQL:
+
+- `python -m unittest discover -s tests -v`: 19 pruebas correctas.
+- Seis pruebas nuevas comprueban filtros combinados, total filtrado anterior al límite, orden ascendente/descendente, desempate por ID, páginas fuera de rango y ausencia de coincidencias. También verifican que la consulta de filas incluya WHERE, ORDER BY, LIMIT y OFFSET, y que el conteo no tenga LIMIT.
+- `python tests_manual/verificar_postgres.py`: 63 casos correctos, 15 operaciones cubiertas; también pasan migraciones, persistencia tras reiniciar y rechazo de reservas simultáneas superpuestas.
+
+No cambian los parámetros de la API ni la estructura de las respuestas. Las pruebas PostgreSQL usan una base temporal y no modifican los datos de la base normal.
+
+
+
+## Seeders - 30 de octubre de 2026
+
+Se verificaron los seeders de Benjamín con el ajuste de carga global sobre una base PostgreSQL temporal, sin modificar la base normal:
+
+- Primera ejecución de `python -m infrastructure.seeders.run`: 3 salas, 3 estudiantes, 5 reservas y 2 incidencias.
+- Segunda ejecución: carga omitida y cantidades sin cambios.
+- Todas las reservas iniciales cumplieron la validación del servicio.
+- Con una sala previa de capacidad 1: carga omitida, sin estudiantes, reservas o incidencias nuevas.
+- Dos cargas simultáneas sobre una base vacía: una insertó los 13 registros y la otra omitió la carga; sin duplicados.
+- Suite local: 13 pruebas aprobadas, incluidas cinco de seeders (carga, repetición, bases parciales y rollback).
+
+Los casos locales pueden repetirse con `python -m unittest tests.test_seeders -v`. El script `verificar_postgres.py` anterior prueba la API y persistencia; no incluye estos escenarios de seeders.
+
+
 ## Imagen Docker - 30 de octubre de 2026
 
 Se verificó la construcción y ejecución de la API en contenedor con PostgreSQL 16, partiendo de un volumen nuevo (`docker compose down -v`).
