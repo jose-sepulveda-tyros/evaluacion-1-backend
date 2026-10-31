@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .validaciones import MAX_ENTERO_POSTGRES
+
 
 class ReservaCrear(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -14,7 +16,7 @@ class ReservaCrear(BaseModel):
     fecha: date
     hora_inicio: time
     hora_fin: time
-    cantidad_personas: int = Field(gt=0, strict=True)
+    cantidad_personas: int = Field(gt=0, le=MAX_ENTERO_POSTGRES, strict=True)
     estado: Literal["activa", "cancelada"] = "activa"
 
     @field_validator("hora_inicio", "hora_fin")

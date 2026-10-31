@@ -77,3 +77,13 @@ Comandos principales ejecutados en la copia: `docker compose build api`, `docker
 El primer intento del verificador de revisión conservó el puerto temporal anterior al reinicio y no pudo confirmar la respuesta. Se corrigió la lectura del puerto asignado por Docker y se repitió todo el procedimiento con éxito; no fue necesario cambiar código del proyecto.
 
 Al terminar se eliminaron únicamente los contenedores y el volumen del proyecto temporal de revisión. La base normal se conservó. No se recomienda eliminar su volumen para repetir pruebas.
+
+## Correcciones de validación antes del PR - 31 de octubre de 2026
+
+Se reprodujeron dos entradas que devolvían HTTP 500: capacidad `2147483648` y texto con NUL (`U+0000`). Después de añadir restricciones Pydantic, ambas devuelven HTTP 422 con `error.code=VALIDATION_ERROR` y detalles del campo; una solicitud válida sigue devolviendo 201.
+
+- Capacidad y cantidad de personas se limitan al máximo de INTEGER PostgreSQL: 2147483647.
+- Los textos de salas, estudiantes e incidencias, incluido equipamiento, rechazan NUL sin eliminar ni transformar silenciosamente el carácter.
+- `python -m unittest discover -s tests -v`: 25 pruebas correctas.
+- `python tests_manual/verificar_postgres.py`: 70 casos correctos, 15 operaciones cubiertas; migraciones, reinicio y concurrencia también correctos.
+- Los siete nuevos casos HTTP están al final de `pruebas.http` (64 a 70). Las pruebas se ejecutaron con una base temporal, sin modificar los datos normales.

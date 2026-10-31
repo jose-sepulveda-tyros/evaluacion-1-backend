@@ -1,13 +1,15 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .validaciones import TextoSinNul, MAX_ENTERO_POSTGRES
+
 
 class SalaCrear(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    nombre: str = Field(min_length=3, max_length=80)
-    capacidad: int = Field(gt=0, strict=True)
-    ubicacion: str = Field(min_length=3, max_length=120)
-    equipamiento: list[str] = Field(default_factory=list)
+    nombre: TextoSinNul = Field(min_length=3, max_length=80)
+    capacidad: int = Field(gt=0, le=MAX_ENTERO_POSTGRES, strict=True)
+    ubicacion: TextoSinNul = Field(min_length=3, max_length=120)
+    equipamiento: list[TextoSinNul] = Field(default_factory=list)
 
     @field_validator("nombre", "ubicacion", mode="before")
     @classmethod

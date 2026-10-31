@@ -602,3 +602,93 @@ Content-Type: application/json
 ### 63. Estado final de la colección
 # expect {"status": 200, "body": {"total": 4, "items.0.id": 1, "items.3.id": 4}}
 GET {{baseUrl}}/reservas
+
+
+### 64. Capacidad fuera del rango INTEGER
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/salas
+Content-Type: application/json
+
+{
+  "nombre": "Sala inválida",
+  "capacidad": 2147483648,
+  "ubicacion": "Piso 1"
+}
+
+
+### 65. Actualizar capacidad fuera del rango INTEGER
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+PUT {{baseUrl}}/salas/1
+Content-Type: application/json
+
+{
+  "nombre": "Sala inválida",
+  "capacidad": 2147483648,
+  "ubicacion": "Piso 1"
+}
+
+
+### 66. Nombre de sala con NUL
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/salas
+Content-Type: application/json
+
+{
+  "nombre": "Sala\u0000inválida",
+  "capacidad": 5,
+  "ubicacion": "Piso 1"
+}
+
+
+### 67. Nombre de estudiante con NUL
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "Ana\u0000Pérez",
+  "carrera": "Informática",
+  "correo": "ana@example.com"
+}
+
+
+### 68. Reporte de incidencia con NUL
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/incidencias
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "reporte": "Falta\u0000plumón",
+  "fecha": "2026-11-10"
+}
+
+
+### 69. Equipamiento con NUL
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/salas
+Content-Type: application/json
+
+{
+  "nombre": "Sala inválida",
+  "capacidad": 5,
+  "ubicacion": "Piso 1",
+  "equipamiento": [
+    "Pizarra\u0000"
+  ]
+}
+
+
+### 70. Cantidad de personas fuera del rango INTEGER
+# expect {"status": 422, "body": {"error.code": "VALIDATION_ERROR"}}
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "sala_id": 1,
+  "estudiante_id": 1,
+  "fecha": "2026-11-10",
+  "hora_inicio": "10:00",
+  "hora_fin": "11:00",
+  "cantidad_personas": 2147483648
+}

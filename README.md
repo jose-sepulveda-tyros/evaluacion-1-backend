@@ -153,7 +153,7 @@ Las pruebas de modelos y migración usan SQLite temporal únicamente para verifi
 
 ## Reglas y validaciones
 
-**Pydantic** comprueba IDs y cantidades positivas, longitudes, fechas, horas y correos (`EmailStr`). Los estados de reserva son `activa` y `cancelada`. Los modelos de entrada rechazan campos adicionales. Las horas representan la hora local del campus, sin zona horaria.
+**Pydantic** rechaza el carácter NUL (U+0000) en textos de salas, estudiantes e incidencias, incluido el equipamiento. Capacidad y cantidad de personas admiten hasta 2.147.483.647, el máximo de INTEGER en PostgreSQL; valores mayores devuelven 422. También comprueba IDs y cantidades positivas, longitudes, fechas, horas y correos (`EmailStr`). Los estados de reserva son `activa` y `cancelada`. Los modelos de entrada rechazan campos adicionales. Las horas representan la hora local del campus, sin zona horaria.
 
 **Los servicios** aplican las siguientes reglas:
 
@@ -244,7 +244,7 @@ Las rutas o métodos no implementados conservan los errores predeterminados de F
 
 ## Pruebas reproducibles
 
-La colección [tests_manual/pruebas.http](tests_manual/pruebas.http) amplía el archivo inicial del rol 4. Contiene 63 casos con resultados esperados, cobertura de los 15 endpoints, reglas de negocio, validaciones y paginación con varios registros.
+La colección [tests_manual/pruebas.http](tests_manual/pruebas.http) amplía el archivo inicial del rol 4. Contiene 70 casos con resultados esperados, cobertura de los 15 endpoints, reglas de negocio, validaciones y paginación con varios registros.
 
 1. Para la colección manual, inicia Uvicorn conectado a una base de pruebas recién creada y migrada, sin registros y con secuencias nuevas. No uses una base con datos que quieras conservar.
 2. En otra terminal, desde la raíz del proyecto y con `.venv` activado, ejecuta:
@@ -273,7 +273,7 @@ Con el servicio PostgreSQL disponible y `.env` configurado:
 python tests_manual/verificar_postgres.py
 ```
 
-El script requiere que el usuario PostgreSQL pueda crear bases (el usuario inicial de Docker tiene ese permiso). Crea una base temporal con nombre aleatorio terminado en `_test`, migra, revierte y vuelve a migrar, ejecuta los 63 casos sobre un Uvicorn temporal, reinicia ese servidor y comprueba los datos. También comprueba dos reservas simultáneas: una debe responder 201 y la otra 409. Al terminar elimina exclusivamente la base temporal que acaba de crear, nunca la base normal del `.env`. No requiere que detengas tu API habitual.
+El script requiere que el usuario PostgreSQL pueda crear bases (el usuario inicial de Docker tiene ese permiso). Crea una base temporal con nombre aleatorio terminado en `_test`, migra, revierte y vuelve a migrar, ejecuta los 70 casos sobre un Uvicorn temporal, reinicia ese servidor y comprueba los datos. También comprueba dos reservas simultáneas: una debe responder 201 y la otra 409. Al terminar elimina exclusivamente la base temporal que acaba de crear, nunca la base normal del `.env`. No requiere que detengas tu API habitual.
 
 Resultados del bloque actual: [evidencia de persistencia](tests_manual/evidencia-postgresql.md).
 

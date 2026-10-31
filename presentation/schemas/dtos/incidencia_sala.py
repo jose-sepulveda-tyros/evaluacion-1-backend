@@ -2,12 +2,14 @@ from datetime import date
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .validaciones import TextoSinNul
+
 
 class IncidenciaSalaCrear(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     sala_id: int = Field(gt=0, strict=True)
-    reporte: str = Field(min_length=5, max_length=500)
+    reporte: TextoSinNul = Field(min_length=5, max_length=500)
     fecha: date
     resuelto: bool = False
 
